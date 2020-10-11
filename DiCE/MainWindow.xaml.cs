@@ -38,13 +38,9 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * ------------------------------------
  * 
  * TODO:
- * -Find people to test on - Lion from Hoggit Discord wants to test. Wizard from PMs on discord wants to test.
- *  -Lion - Working as intended
- *  -Cheeseface - waiting for feedback
- *  -Wizard - waiting for feedback
- *  -Wayward?
- *  -Flyboys - waiting for feedback
- * -Write README document with nice words and pretty pictures.
+ * -Release v1
+ * -Go thought the luas again to make sure everything is uniform
+ * -Update the README document with the forum links and DCS Userfiles link
  * 
  * --------------------------------------
  * 
@@ -55,9 +51,6 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * -Make better logic for the detection of DCS and the options.lua and to show the buttons when they are not detected
  * -select dcs.exe and  select options.lua backups arent exactly working...
  * -Decide if you want to do individual .lua backups and/or options.lua backups(not right now. The CMS files are only 4kb, so space wont be an issue)
- * -Put in link to the forums, github, and my other projects.
- *-Release on github for v1 release
- *-Prevent options lua double-writes on Special Menu "OK"
  * 
  * 
  * Version Targets:
@@ -112,6 +105,7 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * -Initial Release
  * -DiCE F-18C enabled
  * -DiCE F-16C enabled
+ * -about 1508 lines of code in this file
  * 
  * vFuture
  * -DiCE A-10C
@@ -125,15 +119,10 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * -None reported
  * -If your DCS normally hangs up when you Alt+Tab from the loading screen, DCS may hang when loading DiCE. If
  *  you experence this problem, you may have to launch DiCE manually after DCS starts. Delete the DiCE hook file
- *  (located here) and make a shortcut to DiCE.exe (located here).
+ *  (located here) and make a shortcut to DiCE.exe (located here). (Noted in Readme)
  * 
  * 
  * Notes:
- * Azorath09/18/2020
- * oh and you can use
- * %USERPROFILE%\Saved Games\DCS\Config
- * environment variable to reach the userdata location.
- * Complete list :slight_smile: https://pureinfotech.com/list-environment-variables-windows-10/
  * 
  * https://docs.microsoft.com/en-us/dotnet/standard/io/how-to-read-text-from-a-file
  * 
@@ -146,13 +135,6 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * Special thank to CiriBob, the creator of DCS-SRS. Witout their help, you would have had do a few more things by hand.
  * Special thanks to the Hoggit Discord for answering my questions and here, there, and everywhere.
  * Special thanks to all who voluntered to demo and test DiCE. Your bravery will never be forgotten.
- * 
- * 
- * Planned Easter eggs:
- * -Different Dice Colors on image click
- * -after x clicks, sound "Good job mopboius one"
- * -after 50 clicks, give green fact (there are 50 words in the book)
- * -after x clicks have some jokes or somehting in the log
  * 
  * End of Comments------//
  */
@@ -187,24 +169,31 @@ namespace DiCE
         string cmdsLua_F16C_fullPath;
         string cmdsLua_F16C_FolderPath;
 
+        //the below are not yet implemented in DiCE
         string cmdsLua_A10C_fullPath;
         string cmdsLua_A10C_FolderPath;
+
+        string cmdsLua_A10C2_fullPath;
+        string cmdsLua_A10C2_FolderPath;
 
         string cmdsLua_M2000C_fullPath;
         string cmdsLua_M2000C_FolderPath;
 
         string cmdsLua_AV8B_fullPath;
         string cmdsLua_AV8B_FolderPath;
+        //the above are not yet implemented in DiCE
 
         bool isDCSrunning;
 
         FileSystemWatcher fileSystemWatcher1;
-        DateTime fsLastRaised = DateTime.Now;//this is going to be used for making sure that there isnt an overreaction to the options lua being changed
+        DateTime fsLastRaised = DateTime.Now;//this is going to be used for making sure that 
+        //there isnt an overreaction to the options lua being changed
 
         //these are the names of the identifiers in the options.lua file
         string detection_F18C_DiCE = "DiCE F-18C";
         string detection_F16C_DiCE = "DiCE F-16C";
 
+        //these make sure that DiCE exports CMS profiles that the user actually has
         string detection_F18C_vanilla = "[\"F/A-18C\"]";
         string detection_F16C_vanilla = "[\"F-16C\"]";
 
