@@ -1,0 +1,334 @@
+﻿<Window x:Class="DiCE.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DiCE"
+        mc:Ignorable="d"
+        Title="DiCE - DCS Integrated Countermeasure Editor v1 by Bailey" Height="151" Width="518.5" MinHeight="200" MinWidth="550" 
+        WindowStyle="None" Background="Transparent" AllowsTransparency="False" Name="myWindow">
+    <!--// change 'allowsTransparance to true to get true borderless, no resize //-->
+
+    <Grid >
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="5"/>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="5"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0"/>
+            <!--// change to zero to get to the edge. chage to 5 to give some room //-->
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="5"/>
+        </Grid.RowDefinitions>
+
+        <!--// Background Image //-->
+
+        <Grid.Background>
+            <ImageBrush ImageSource="Assets\selectrole.png" Stretch="UniformToFill"></ImageBrush>
+        </Grid.Background>
+
+        <!--// Title Bar //-->
+
+        <TextBlock Grid.Row="1" Grid.Column="1"  Text="DiCE - DCS Integrated Countermeasure Editor v1 by Bailey" 
+                   VerticalAlignment="Top" Width="Auto" Background="#2d3e50" Foreground="#bccece" FontSize="18" 
+                   FontWeight="Bold" FontStyle="Italic" Grid.ColumnSpan="4" Height="24" Grid.RowSpan="1" PreviewMouseLeftButtonDown="titleBar_leftButtonDown">
+        </TextBlock>
+
+        <!--// Opacity Background //-->
+
+        <TextBlock Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2"
+                   Opacity=".93" Text="" Background="#2d3e50" Margin="5,5,0,0">
+        </TextBlock>
+
+        <!--// Title Bar Buffer//-->
+
+        <TextBlock Grid.Row="1" Grid.Column="0"  Text="" 
+                   VerticalAlignment="Top" Width="Auto" Background="#2d3e50" Foreground="#bccece" FontSize="18" 
+                   FontWeight="Bold" FontStyle="Italic" Height="24" />
+
+        <!--// Close App button //-->
+
+        <Button x:Name="button_close" Grid.Column="3" Grid.Row="1"  HorizontalAlignment="Left" Width="13" Click="closeButton_Click" Margin="0,6" >
+            <Button.Template>
+                <ControlTemplate>
+                    <Image ToolTip="Closes DiCE" >
+                        <Image.Style>
+                            <Style>
+                                <Setter Property="Image.Source" Value="Assets\close_normal.png" />
+                                <Style.Triggers>
+                                    <Trigger  Property="Image.IsMouseOver" Value="True">
+                                        <Setter Property="Image.Source" Value="Assets\close_hover_press.png" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+
+
+
+        <!--// First Button On Bottom //-->
+
+
+        <Grid Grid.Column="2" Grid.Row="3" Grid.ColumnSpan="2" Grid.RowSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+
+            <Button x:Name="button_selectDcsExe" Click="button_selectDcsExe_Click" HorizontalAlignment="Left" Grid.Column="0"
+                Width="140" Height="50" FontWeight="Bold"  VerticalAlignment="Bottom" Foreground="White" 
+                    Visibility="Visible">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Grid>
+                            <Image MaxWidth="140" MaxHeight="50">
+                                <Image.Style>
+                                    <Style>
+                                        <Setter Property="Image.Source" Value="Assets\btngray_released.png"/>
+                                        <Style.Triggers>
+                                            <Trigger  Property="Image.IsMouseOver" Value="True">
+                                                <Setter Property="Image.Source" Value="Assets\btngray_pressed.png" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+
+                                </Image.Style>
+                            </Image>
+                            <TextBlock Text="Select DCS.exe" Foreground="White" MaxWidth="140" MaxHeight="50"
+                   FontWeight="Bold"  VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False" Height="16" Width="120" TextAlignment="Center" >
+                            </TextBlock>
+
+                        </Grid>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+
+
+            <!--// Second Button On Bottom //-->
+
+            <Button x:Name="button_selectOptionsLua" Click="button_selectOptionsLua_Click" HorizontalAlignment="Center" Grid.Column="1"
+                Width="140" Height="50" FontWeight="Bold"  VerticalAlignment="Bottom" Foreground="White"
+                    Visibility="Visible">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Grid>
+                            <Image MaxWidth="140" MaxHeight="50">
+                                <Image.Style>
+                                    <Style>
+                                        <Setter Property="Image.Source" Value="Assets\btngray_released.png"/>
+                                        <Style.Triggers>
+                                            <Trigger  Property="Image.IsMouseOver" Value="True">
+                                                <Setter Property="Image.Source" Value="Assets\btngray_pressed.png" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+
+                                </Image.Style>
+                            </Image>
+                            <TextBlock Text="Select Options.lua" Foreground="White" MaxWidth="140" MaxHeight="50"
+                   FontWeight="Bold"  VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False" Height="16" Width="120" TextAlignment="Center" >
+                            </TextBlock>
+
+                        </Grid>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+
+
+            <!--// Third Button On Bottom //-->
+
+            <Button x:Name="button_exit" HorizontalAlignment="Right" Grid.Column="2" 
+                Width="140" Height="50" FontWeight="Bold"  VerticalAlignment="Bottom" Foreground="White"
+                    Visibility="Visible" Click="button_exit_Click">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Grid>
+                            <Image MaxWidth="140" MaxHeight="50">
+                                <Image.Style>
+                                    <Style>
+                                        <Setter Property="Image.Source" Value="Assets\btngray_released.png"/>
+                                        <Style.Triggers>
+                                            <Trigger  Property="Image.IsMouseOver" Value="True">
+                                                <Setter Property="Image.Source" Value="Assets\btngray_pressed.png" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+
+                                </Image.Style>
+                            </Image>
+                            <TextBlock Text="EXIT" Foreground="White" MaxWidth="140" MaxHeight="50"
+                   FontWeight="Bold"  VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                       IsHitTestVisible="False" Height="16" Width="120" TextAlignment="Center" >
+                            </TextBlock>
+
+                        </Grid>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                   Opacity=".93" Text="" Background="#2d3e50" Margin="5,5,5,5" Width="300"
+                       HorizontalAlignment="Left">
+            </TextBlock>
+            
+            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"  FontWeight="Bold"  
+                       HorizontalAlignment="Left" Foreground="Red" FontStyle="Italic"
+                       VerticalAlignment="Center" Margin="10" >
+                DO NOT CLOSE THIS WINDOW WHEN<LineBreak/>PLAYING DCS. IT ENABLES CMS EDITING.
+            </TextBlock>
+
+           
+        </Grid>
+
+
+
+        <!--// Dice Pic //-->
+
+
+
+
+        <!--<Button x:Name="mainPageDiceLogo" Grid.Column="1" Grid.Row="2" HorizontalAlignment="Center" Width="100" Click="mainPageDiceLogo_click" Margin="20,3" >
+            <Button.Template>
+                <ControlTemplate>
+                    <Image Source="Assets/DiCE_icon_1024.png"/>
+                </ControlTemplate>
+            </Button.Template>-->
+
+        <!--// changes the size of the window in a wird way when you click the dice https://stackoverflow.com/questions/19554073/use-animation-to-change-window-size-in-wpf //-->
+        <!--
+            
+            <Button.Triggers>
+                <EventTrigger  RoutedEvent="Button.Click">
+                    <EventTrigger.Actions>
+                        <BeginStoryboard >
+                            <Storyboard  RepeatBehavior="Forever" AutoReverse="False">
+                                <DoubleAnimation  Storyboard.TargetName="myWindow"
+                                      Storyboard.TargetProperty = "(Window.Height)"
+                                        To="200" Duration="0:0:5"/>
+                                <Storyboard  RepeatBehavior="Forever" AutoReverse="False">
+
+                                    <DoubleAnimation  Storyboard.TargetName="myWindow"
+                                      Storyboard.TargetProperty = "(Window.Width)"
+                                        To="600" Duration="0:0:5"/>
+                                </Storyboard>
+                            </Storyboard>
+                        </BeginStoryboard>
+
+                    </EventTrigger.Actions>
+                </EventTrigger>
+            </Button.Triggers>-->
+
+        <!--</Button>-->
+
+        <!--// Log Box //-->
+
+        <RichTextBox x:Name="richTextBox_log" Grid.Column="2" Grid.Row="2" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto"
+                     Grid.ColumnSpan="2" Margin="5,5,0,0" Background="Transparent" BorderBrush="Transparent" 
+                     FontFamily="Arial Black" Grid.RowSpan="2" TextChanged="richTextBox_log_TextChanged" 
+                     TextInput="richTextBox_log_TextInput" IsReadOnly="True">
+            <FlowDocument AllowDrop="False" Focusable="False" LineStackingStrategy="BlockLineHeight" ToolTip="DiCE Log"
+>
+                <Paragraph>
+                    <!--<Run Text="DEBRIEFING"/>-->
+                </Paragraph>
+
+            </FlowDocument>
+            <RichTextBox.Resources>
+                <Style TargetType="{x:Type Paragraph}">
+                    <Setter Property="Margin" Value="0"/>
+                </Style>
+            </RichTextBox.Resources>
+
+        </RichTextBox>
+
+        <!--// Donate button //-->
+
+        <Button x:Name="buttonOnBottomDonate" HorizontalAlignment="Left" Grid.Column="1" Grid.Row="4"
+                Width="140" Height="50" FontWeight="Bold"  VerticalAlignment="Bottom" Foreground="White" 
+                Click="buttonOnBottomDonate_Click" Visibility="Visible">
+            <Button.Template>
+                <ControlTemplate>
+                    <Grid>
+                        <Image MaxWidth="140" MaxHeight="50">
+                            <Image.Style>
+                                <Style>
+                                    <Setter Property="Image.Source" Value="Assets\btngray_released.png"/>
+                                    <Style.Triggers>
+                                        <Trigger  Property="Image.IsMouseOver" Value="True">
+                                            <Setter Property="Image.Source" Value="Assets\btngray_pressed.png" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+
+                            </Image.Style>
+                        </Image>
+                        <TextBlock x:Name="donateButton" Text="Paypal Donate" Foreground="White" MaxWidth="140" MaxHeight="50"
+                   FontWeight="Bold"  VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False" Height="16" Width="120" TextAlignment="Center" >
+                        </TextBlock>
+
+                    </Grid>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+
+
+
+
+        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Vertical" VerticalAlignment="Top" >
+
+            <Button x:Name="mainPageDiceLogo3" HorizontalAlignment="Center" Width="100" Margin="20,3"
+                    Click="mainPageDiceLogo_click">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Image Source="Assets/DiCE_icon_1024.png"/>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <TextBlock Height="25" />
+            <!--// uses as a spacer //-->
+
+            <Button x:Name="mainPageDiceLogo2" HorizontalAlignment="Center" Width="100"  Margin="20,3" >
+                <Button.Template>
+                    <ControlTemplate>
+                        <Image Source="Assets/icon-F18C.png"/>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <TextBlock Height="25" Text="DCS F-18C" HorizontalAlignment="Center" FontFamily="Arial Black" FontSize="20" />
+            <!--// uses as a spacer //-->
+
+            <Button x:Name="mainPageDiceLogo4" HorizontalAlignment="Center" Width="100"  Margin="20,3" >
+                <Button.Template>
+                    <ControlTemplate>
+                        <Image Source="Assets/icon-F16C.png"/>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <TextBlock Height="25" Text="DCS F-16C" HorizontalAlignment="Center" FontFamily="Arial Black" FontSize="20"  />
+            <!--// uses as a spacer //-->
+
+
+        </StackPanel>
+
+
+    </Grid>
+
+
+
+
+</Window>

@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30517.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiCE", "DiCE\DiCE.csproj", "{AB272FA6-C6CE-410F-B1FD-4C07E67A319D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AB272FA6-C6CE-410F-B1FD-4C07E67A319D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB272FA6-C6CE-410F-B1FD-4C07E67A319D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB272FA6-C6CE-410F-B1FD-4C07E67A319D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB272FA6-C6CE-410F-B1FD-4C07E67A319D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2A7F0501-6F75-46A9-A7CF-1A12EA0258DA}
+	EndGlobalSection
+EndGlobal
