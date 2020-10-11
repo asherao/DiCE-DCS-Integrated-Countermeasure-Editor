@@ -51,6 +51,9 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * -Make better logic for the detection of DCS and the options.lua and to show the buttons when they are not detected
  * -select dcs.exe and  select options.lua backups arent exactly working...
  * -Decide if you want to do individual .lua backups and/or options.lua backups(not right now. The CMS files are only 4kb, so space wont be an issue)
+ * -Create the options for DiCE.exe to launch with or without DCS (like SRS's special option)
+ * -Minimise button for DicE.exe
+ * -See if you can get DiCE.exe to launch in a way to at does not "take focus" from the DCS launch
  * 
  * 
  * Version Targets:
