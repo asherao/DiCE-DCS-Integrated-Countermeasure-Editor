@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DiCE"
         mc:Ignorable="d"
-        Title="DiCE - DCS Integrated Countermeasure Editor v1 by Bailey" Height="151" Width="518.5" MinHeight="200" MinWidth="550" 
+        Title="DiCE - DCS Integrated Countermeasure Editor v3 by Bailey" Height="151" Width="570" MinHeight="200" MinWidth="570" 
         WindowStyle="None" Background="Transparent" AllowsTransparency="False" Name="myWindow">
     <!--// change 'allowsTransparance to true to get true borderless, no resize //-->
 
@@ -14,6 +14,7 @@
             <ColumnDefinition Width="5"/>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="5"/>
         </Grid.ColumnDefinitions>
@@ -35,14 +36,14 @@
 
         <!--// Title Bar //-->
 
-        <TextBlock Grid.Row="1" Grid.Column="1"  Text="DiCE - DCS Integrated Countermeasure Editor v1 by Bailey" 
+        <TextBlock Grid.Row="1" Grid.Column="1"  Text="DiCE - DCS Integrated Countermeasure Editor v3 by Bailey" 
                    VerticalAlignment="Top" Width="Auto" Background="#2d3e50" Foreground="#bccece" FontSize="18" 
-                   FontWeight="Bold" FontStyle="Italic" Grid.ColumnSpan="4" Height="24" Grid.RowSpan="1" PreviewMouseLeftButtonDown="titleBar_leftButtonDown">
+                   FontWeight="Bold" FontStyle="Italic" Grid.ColumnSpan="5" Height="24" Grid.RowSpan="1" PreviewMouseLeftButtonDown="titleBar_leftButtonDown">
         </TextBlock>
 
         <!--// Opacity Background //-->
 
-        <TextBlock Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2"
+        <TextBlock Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3"
                    Opacity=".93" Text="" Background="#2d3e50" Margin="5,5,0,0">
         </TextBlock>
 
@@ -52,18 +53,40 @@
                    VerticalAlignment="Top" Width="Auto" Background="#2d3e50" Foreground="#bccece" FontSize="18" 
                    FontWeight="Bold" FontStyle="Italic" Height="24" />
 
+        <!--// Minimise App button //-->
+
+        <Button x:Name="button_minimise" Grid.Column="3" Grid.Row="1"  HorizontalAlignment="Left" 
+                Width="13" Click="minimiseButton_Click" Margin="0,0,5,0" >
+            <Button.Template>
+                <ControlTemplate>
+                    <Image ToolTip="Minimises DiCE" >
+                        <Image.Style>
+                            <Style>
+                                <Setter Property="Image.Source" Value="Assets\minus_normal_pressed.png" />
+                                <Style.Triggers>
+                                    <Trigger  Property="Image.IsMouseOver" Value="True">
+                                        <Setter Property="Image.Source" Value="Assets\minus_hover.png" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+
         <!--// Close App button //-->
 
-        <Button x:Name="button_close" Grid.Column="3" Grid.Row="1"  HorizontalAlignment="Left" Width="13" Click="closeButton_Click" Margin="0,6" >
+        <Button x:Name="button_close" Grid.Column="4" Grid.Row="1"  HorizontalAlignment="Left" Width="13" Click="closeButton_Click" Margin="0,6" >
             <Button.Template>
                 <ControlTemplate>
                     <Image ToolTip="Closes DiCE" >
                         <Image.Style>
                             <Style>
-                                <Setter Property="Image.Source" Value="Assets\close_normal.png" />
+                                <Setter Property="Image.Source" Value="Assets\plus_normal_pressed.png" />
                                 <Style.Triggers>
                                     <Trigger  Property="Image.IsMouseOver" Value="True">
-                                        <Setter Property="Image.Source" Value="Assets\close_hover_press.png" />
+                                        <Setter Property="Image.Source" Value="Assets\plus_hover.png" />
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -235,7 +258,7 @@
         <!--// Log Box //-->
 
         <RichTextBox x:Name="richTextBox_log" Grid.Column="2" Grid.Row="2" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto"
-                     Grid.ColumnSpan="2" Margin="5,5,0,0" Background="Transparent" BorderBrush="Transparent" 
+                     Grid.ColumnSpan="3" Margin="5,5,0,0" Background="Transparent" BorderBrush="Transparent" 
                      FontFamily="Arial Black" Grid.RowSpan="2" TextChanged="richTextBox_log_TextChanged" 
                      TextInput="richTextBox_log_TextInput" IsReadOnly="True">
             <FlowDocument AllowDrop="False" Focusable="False" LineStackingStrategy="BlockLineHeight" ToolTip="DiCE Log"
@@ -300,7 +323,7 @@
             <TextBlock Height="25" />
             <!--// uses as a spacer //-->
 
-            <Button x:Name="mainPageDiceLogo2" HorizontalAlignment="Center" Width="100"  Margin="20,3" >
+            <Button x:Name="mainPageDiceLogo2" HorizontalAlignment="Center" Width="86"  Margin="20,3" >
                 <Button.Template>
                     <ControlTemplate>
                         <Image Source="Assets/icon-F18C.png"/>
@@ -311,7 +334,7 @@
             <TextBlock Height="25" Text="DCS F-18C" HorizontalAlignment="Center" FontFamily="Arial Black" FontSize="20" />
             <!--// uses as a spacer //-->
 
-            <Button x:Name="mainPageDiceLogo4" HorizontalAlignment="Center" Width="100"  Margin="20,3" >
+            <Button x:Name="mainPageDiceLogo4" HorizontalAlignment="Center" Width="86"  Margin="20,3" >
                 <Button.Template>
                     <ControlTemplate>
                         <Image Source="Assets/icon-F16C.png"/>
@@ -322,6 +345,16 @@
             <TextBlock Height="25" Text="DCS F-16C" HorizontalAlignment="Center" FontFamily="Arial Black" FontSize="20"  />
             <!--// uses as a spacer //-->
 
+
+            <Button x:Name="mainPageDiceLogo5" HorizontalAlignment="Center" Width="86"  Margin="20,3" >
+                <Button.Template>
+                    <ControlTemplate>
+                        <Image Source="Assets/icon-A10C.png"/>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <TextBlock Height="25" Text="DCS A-10C" HorizontalAlignment="Center" FontFamily="Arial Black" FontSize="20"  />
 
         </StackPanel>
 

@@ -19,7 +19,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Path = System.IO.Path;//not quite sure if this is correct
 
-/*Welcome to DiCE - DCS Integrated Countermeasure Editor
+/* Welcome to DiCE - DCS Integrated Countermeasure Editor
  * 
  * Vision:
  * -Player Launches DCS
@@ -37,31 +37,31 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * 
  * ------------------------------------
  * 
- * TODO:
- * -Release v1
- * -Go thought the luas again to make sure everything is uniform
- * -Update the README document with the forum links and DCS Userfiles link
+ * TODO: 
+ * -Write a "Release Checklist"
  * 
  * --------------------------------------
  * 
  * TODO: Later
+ * -Make logic for the export a10c and a10c2 so that the files are not exported twice for both aircraft
  * -try to scroll to end after init
  * -Make sure that the program never ever blocks DCS from writing to any file, ever(has never been blocked, yet...)
- * -Make more DiCE modules
  * -Make better logic for the detection of DCS and the options.lua and to show the buttons when they are not detected
  * -select dcs.exe and  select options.lua backups arent exactly working...
  * -Decide if you want to do individual .lua backups and/or options.lua backups(not right now. The CMS files are only 4kb, so space wont be an issue)
  * -Create the options for DiCE.exe to launch with or without DCS (like SRS's special option)
- * -Minimise button for DicE.exe
  * -See if you can get DiCE.exe to launch in a way to at does not "take focus" from the DCS launch
+ * -See if you can make logic that will check for changes before exporting the CMS file
+ * -Make the log a little more readable. It kinda looks like things export twice.
  * 
  * 
  * Version Targets:
- * -target v1 as f18 and f16 complete
- * -target v2 as a10 and a102 complete
- * -target v3 as m2000c and av8b complete
- * -tarvet v4 as f5 complete
- * -target v5 as f16harms as complete
+ * -target v1 as f18 and f16 complete (done)
+ * -target v2 as a10 and a102 complete (done)
+ * -target v3 as av8b complete (done)
+ * -target v4 as m2000c complete
+ * -tarvet v5 as f5 complete
+ * -target v6 as f16harms as complete
  * 
  * 
  * Deliverables:
@@ -94,7 +94,7 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * -----entry.lua
  * ----DiCE-EXE
  * -----bin
- * ------DiCE.exeitor.exe
+ * ------DiCE.exe
  * --Logs
  * ---DiCE.log (this file will be created due to the hooks lua)
  * --Scripts
@@ -103,6 +103,118 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * (v1 END) 
  * 
  *
+ *
+ * (v2 Start)
+ * -DCS Integrated Countermeasure Editor
+ * --mods
+ * ---Services
+ * ----DiCE A-10C
+ * -----options
+ * ------options.dlg
+ * ------optionsData.lua
+ * ------optionsDb.lua
+ * -----theme
+ * ------icon.png
+ * ------icon_active.png
+ * ------icon_select.png
+ * ------icon-38x38.png
+ * -----entry.lua
+ * ----DiCE F-16C
+ * -----options
+ * ------options.dlg
+ * ------optionsData.lua
+ * ------optionsDb.lua
+ * -----theme
+ * ------icon.png
+ * ------icon_active.png
+ * ------icon_select.png
+ * ------icon-38x38.png
+ * -----entry.lua
+ * ----DiCE F-18C
+ * -----options
+ * ------options.dlg
+ * ------optionsData.lua
+ * ------optionsDb.lua
+ * -----theme
+ * ------icon.png
+ * ------icon_active.png
+ * ------icon_select.png
+ * ------icon-38x38.png
+ * -----entry.lua
+ * ----DiCE-EXE
+ * -----bin
+ * ------DiCE.exe
+ * --Logs
+ * ---DiCE.log (this file will be created due to the hooks lua)
+ * --Scripts
+ * ---Hooks
+ * ----DiCE-DCS-Integrated-Countermeasure-Editor-hook.lua
+ * (v2 END) 
+ * 
+ * 
+ * (v3 Start)
+ * -DCS Integrated Countermeasure Editor
+ * --mods
+ * ---Services
+ * ----DiCE A-10C
+ * -----options
+ * ------options.dlg
+ * ------optionsData.lua
+ * ------optionsDb.lua
+ * -----theme
+ * ------icon.png
+ * ------icon_active.png
+ * ------icon_select.png
+ * ------icon-38x38.png
+ * ------icon-A10C.png
+ * -----entry.lua
+ * ----DiCE F16C
+ * -----options
+ * ------options.dlg
+ * ------optionsData.lua
+ * ------optionsDb.lua
+ * -----theme
+ * ------icon.png
+ * ------icon_active.png
+ * ------icon_select.png
+ * ------icon-38x38.png
+ * ------icon-F-16C.png
+ * -----entry.lua
+ * ----DiCE F-18C
+ * -----options
+ * ------options.dlg
+ * ------optionsData.lua
+ * ------optionsDb.lua
+ * -----theme
+ * ------icon.png
+ * ------icon_active.png
+ * ------icon_select.png
+ * ------icon-38x38.png
+ * ------icon-F18C.png
+ * -----entry.lua
+ * ----DiCE AV-8B
+ * -----options
+ * ------options.dlg
+ * ------optionsData.lua
+ * ------optionsDb.lua
+ * -----theme
+ * ------icon.png
+ * ------icon_active.png
+ * ------icon_select.png
+ * ------icon-38x38.png
+ * ------icon-AV8B.png
+ * -----entry.lua
+ * ----DiCE-EXE
+ * -----bin
+ * ------DiCE.exe
+ * --Logs
+ * ---DiCE.log (this file will be created due to the hooks lua)
+ * --Scripts
+ * ---Hooks
+ * ----DiCE-DCS-Integrated-Countermeasure-Editor-hook.lua
+ * (v3 END) 
+ * 
+ * 
  * Version Notes:
  * v1
  * -Initial Release
@@ -110,11 +222,23 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * -DiCE F-16C enabled
  * -about 1508 lines of code in this file
  * 
+ * v2
+ * -DiCE A-10C and A-10C2 enabled (one Special Menu for both)
+ * -about 2002 lines of code in this file
+ * 
+ * v2.1
+ *-Corrected some F-16C values
+ *
+ * v2.2
+ * -DiCE now opens minimized (requested feature)
+ * -Fixed a F-16 special options menu showing all zeros (added two parenthesis)
+ * 
+ * v3
+ * -DiCE AV-8B enabled 
+ * 
+ *
  * vFuture
- * -DiCE A-10C
- * -DiCE A-10C2
  * -DiCE M2000C
- * -DiCE AV-8B
  * -DiCE F-16C Harm Tables
  * 
  * 
@@ -132,6 +256,14 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * DCS World OpenBeta\dxgui\skins\skinME\images\manager_modules\warning.png (can be used for something)
  * DCS World OpenBeta\dxgui\skins\skinME\images\Source (Good source pics)
  * DCS World OpenBeta\FUI\Common (DCS splash screen)
+ * DCS World OpenBeta\dxgui\skins\skinME\images\Buttons\combobox //possible use for minimise icon
+ * DCS World OpenBeta\dxgui\skins\skinME\images\Buttons\server_settings\minus //possible use for minimise icon
+ * DCS World OpenBeta\dxgui\skins\skinME\images\m1\buttons\btnminus
+ * DCS World OpenBeta\dxgui\skins\skinME\images\manual //good icons for a redo
+ * DCS World OpenBeta\dxgui\skins\skinME\images\window\mp\create_server \\good icons too
+ * 
+ * DCS World OpenBeta\dxgui\skins\skinME\images\window\logbook_icon //sihlouettes of dcs aircraft
+ * 
  * 
  * Thanks:
  * Thank you to everyone that helped me during this project and all projects I have done before.
@@ -171,13 +303,13 @@ namespace DiCE
 
         string cmdsLua_F16C_fullPath;
         string cmdsLua_F16C_FolderPath;
-
-        //the below are not yet implemented in DiCE
+        
         string cmdsLua_A10C_fullPath;
         string cmdsLua_A10C_FolderPath;
 
-        string cmdsLua_A10C2_fullPath;
-        string cmdsLua_A10C2_FolderPath;
+        //the below are not yet implemented in DiCE
+        string cmdsLua_A10C2_fullPath;//will be combined with the A-10C
+        string cmdsLua_A10C2_FolderPath;//will be combined with the A-10C
 
         string cmdsLua_M2000C_fullPath;
         string cmdsLua_M2000C_FolderPath;
@@ -195,20 +327,35 @@ namespace DiCE
         //these are the names of the identifiers in the options.lua file
         string detection_F18C_DiCE = "DiCE F-18C";
         string detection_F16C_DiCE = "DiCE F-16C";
+        string detection_A10C_DiCE = "DiCE A-10C";
+        string detection_A10C2_DiCE = "DiCE A-10C";//this will be the same as the A-10C
+        string detection_AV8B_DiCE = "DiCE AV-8B";
 
         //these make sure that DiCE exports CMS profiles that the user actually has
         string detection_F18C_vanilla = "[\"F/A-18C\"]";
         string detection_F16C_vanilla = "[\"F-16C\"]";
+        string detection_A10C_vanilla = "[\"A-10C\"]";
+        string detection_A10C2_vanilla = "[\"A-10C_2\"]";
+        string detection_AV8B_vanilla = "[\"AV8BNA\"]";
 
         int mainPageButtonLogo = 0;
 
-        int secondsToCheckIfDcsIsAlive = 2;
+        int secondsToCheckIfDcsIsAlive = 2;//DiCE will check if DCS.exe is running at this rate
+
+        string optionsLuaText;
+
+        //this inits the timer. Putting here allows it to be used in the whole program
+        System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
 
         public MainWindow()
         {
 
-        //simple check to make sure that an instance of dice is not launched while an instance is already running
-        //https://stackoverflow.com/questions/7182949/how-to-check-if-a-wpf-application-is-already-running
+            //-----------------------------------------------------------------------------------------
+            //-----Is DCS Already Running Check
+            //-----------------------------------------------------------------------------------------
+
+            //simple check to make sure that an instance of dice is not launched while an instance is already running
+            //https://stackoverflow.com/questions/7182949/how-to-check-if-a-wpf-application-is-already-running
             string procName = Process.GetCurrentProcess().ProcessName;
 
             // get the list of all processes by the "procName"       
@@ -225,23 +372,35 @@ namespace DiCE
                 // Application.Run(...);
             }
 
-
             InitializeComponent();
+
             //hide the buttons until they actually work in WPF and have use
             button_selectDcsExe.Visibility = Visibility.Hidden;
             button_selectOptionsLua.Visibility = Visibility.Hidden;
 
+            //-----------------------------------------------------------------------------------------
+            //------------Timer Init
+            //-----------------------------------------------------------------------------------------
+
             //https://stackoverflow.com/questions/5410430/wpf-timer-like-c-sharp-timer
-            System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
+           
             dispatcherTimer.Tick += dispatcherTimer_Tick;
             dispatcherTimer.Interval = new TimeSpan(0, 0, secondsToCheckIfDcsIsAlive);//set the time for the DCS process check here (seconds, minutes, hours)
-            
+
+
+            //-----------------------------------------------------------------------------------------
+            //--------First Log Message
+            //-----------------------------------------------------------------------------------------
 
             //MessageBox.Show(appPath);//shows a text box of the folder path of the exe. does not include the exe name
             //https://stackoverflow.com/questions/6485156/adding-strings-to-a-richtextbox-in-c-sharp
             //Just a log entry to show that the program is running
             richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "DiCE is Rolling...");
             richTextBox_log.ScrollToEnd();
+
+            //-----------------------------------------------------------------------------------------
+            //--------Get The DCS.exe Location
+            //-----------------------------------------------------------------------------------------
 
             //https://stackoverflow.com/questions/51148/how-do-i-find-out-if-a-process-is-already-running-using-c
             //https://stackoverflow.com/questions/5497064/how-to-get-the-full-path-of-running-process
@@ -286,6 +445,9 @@ namespace DiCE
             userOptionsLua_Full_pathWithExtention = userOptionsLua_Full_pathWithExtention + "Config\\options.lua";
             //richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "DiCE.exe path : '" + appPath + "'");
             //richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "Predicted options.lua path : '" + userOptionsLua_Full_pathWithExtention + "'");
+            
+            
+            
             if (File.Exists(userOptionsLua_Full_pathWithExtention))
             {
 
@@ -337,7 +499,7 @@ namespace DiCE
             }
             if (isDcsLocationSet == true && isOptionsLuaLocationSet == true)//if both locations are set, then run the program
             {
-
+                //here are the locations where the countermeasure files should be located
                 cmdsLua_F18C_fullPath = dcs_topFolderPath + @"\Mods\aircraft\FA-18C\Cockpit\Scripts\TEWS\device\CMDS_ALE47.lua";
                 cmdsLua_F18C_FolderPath = dcs_topFolderPath + @"\Mods\aircraft\FA-18C\Cockpit\Scripts\TEWS\device";
 
@@ -345,8 +507,10 @@ namespace DiCE
                 cmdsLua_F16C_FolderPath = dcs_topFolderPath + @"\Mods\aircraft\F-16C\Cockpit\Scripts\EWS\CMDS\device";
 
                 cmdsLua_A10C_fullPath = dcs_topFolderPath + @"\Mods\aircraft\A-10C\Cockpit\Scripts\AN_ALE40V\device\AN_ALE40V_params.lua";
-
                 cmdsLua_A10C_FolderPath = dcs_topFolderPath + @"\Mods\aircraft\A-10C\Cockpit\Scripts\AN_ALE40V\device";
+
+                cmdsLua_A10C2_fullPath = dcs_topFolderPath + @"\Mods\aircraft\A-10C_2\Cockpit\Scripts\AN_ALE40V\device\AN_ALE40V_params.lua";
+                cmdsLua_A10C2_FolderPath = dcs_topFolderPath + @"\Mods\aircraft\A-10C_2\Cockpit\Scripts\AN_ALE40V\device";
 
                 cmdsLua_M2000C_fullPath = dcs_topFolderPath + @"\Mods\aircraft\M-2000C\Cockpit\Scripts\SPIRALE.lua";
                 cmdsLua_M2000C_FolderPath = dcs_topFolderPath + @"\Mods\aircraft\M-2000C\Cockpit\Scripts";
@@ -355,14 +519,9 @@ namespace DiCE
                 cmdsLua_AV8B_FolderPath = dcs_topFolderPath + @"\Mods\aircraft\AV8BNA\Cockpit\Scripts\EWS\";
 
 
-                //start the program
                 //MessageBox.Show(optionsLua_topFolderPath);
 
-                //consider resizing the application because those two buttons are gone
-
-                listenToUsersOptionsFile();//make this method
-                //the blow line odes not make the timer in WPF
-                //timer_closeDCS.Enabled = true;//make the timer https://stackoverflow.com/questions/5410430/wpf-timer-like-c-sharp-timer
+                listenToUsersOptionsFile();
                 richTextBox_log.ScrollToEnd();
             }
             else
@@ -371,11 +530,18 @@ namespace DiCE
             }
 
             if (!isDCSrunning == true)
-            {
+            {//if DCS.exe is not detected as running
                 richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "DCS is not detected. Close DCS, close DiCE, make sure you have installed DiCE correctly, and then re-start DCS.");
                 richTextBox_log.ScrollToEnd();
             }
             richTextBox_log.ScrollToEnd();
+
+            //if dcs is running is true, minimise
+            if (isDCSrunning)
+            {
+                WindowState = WindowState.Minimized;//minimise the window. maybe try to make this a launch option?
+            }
+            
         }
 
         private void listenToUsersOptionsFile()
@@ -433,11 +599,32 @@ namespace DiCE
                             richTextBox_log.ScrollToEnd();
                             readAndExportF18Data();
                         }
-                        if (optionsLuaText.Contains(detection_F16C_DiCE) && optionsLuaText.Contains(detection_F16C_vanilla))
+
+                    if (optionsLuaText.Contains(detection_F16C_DiCE) && optionsLuaText.Contains(detection_F16C_vanilla))
                         {
                             richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "F-16C CMS file located.");
                             richTextBox_log.ScrollToEnd();
                             readAndExportF16Data();
+                        }
+
+                    if (optionsLuaText.Contains(detection_A10C_DiCE) && optionsLuaText.Contains(detection_A10C_vanilla))
+                        {
+                            richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "A-10C CMS file located.");
+                            richTextBox_log.ScrollToEnd();
+                            readAndExportA10CData();
+                        }
+
+                    if (optionsLuaText.Contains(detection_A10C2_DiCE) && optionsLuaText.Contains(detection_A10C2_vanilla))
+                        {
+                            richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "A-10C2 CMS file located.");
+                            richTextBox_log.ScrollToEnd();
+                            readAndExportA10CData();
+                        }
+                    if (optionsLuaText.Contains(detection_AV8B_DiCE) && optionsLuaText.Contains(detection_AV8B_vanilla))
+                        {
+                            richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "AV-8B CMS file located.");
+                            richTextBox_log.ScrollToEnd();
+                            readAndExportAV8BData();
                         }
 
                     }
@@ -452,8 +639,6 @@ namespace DiCE
             });
             }
         }
-
-
 
 
         private void playCompleteSound()
@@ -471,7 +656,8 @@ namespace DiCE
 
             //player.Play();
         }
-        string optionsLuaText;
+
+        
 
         private void dispatcherTimer_Tick(object sender, EventArgs e)//fires every 5? seconds
         {//this is not yet enabled
@@ -481,7 +667,7 @@ namespace DiCE
             if (pname.Length == 0)
             {
                 richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "DiCE Closing...");
-                //dispatcherTimer.Stop() //https://stackoverflow.com/questions/5410430/wpf-timer-like-c-sharp-timer
+                dispatcherTimer.Stop(); //https://stackoverflow.com/questions/5410430/wpf-timer-like-c-sharp-timer
                 richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "Closing...");
                 richTextBox_log.ScrollToEnd();
                 System.Windows.Application.Current.Shutdown();
@@ -515,7 +701,7 @@ namespace DiCE
         {//this closes the program when the close button is clicked
             //created to match the feel of DCS
 
-            //dispatcherTimer.Stop() //https://stackoverflow.com/questions/5410430/wpf-timer-like-c-sharp-timer
+            dispatcherTimer.Stop(); //https://stackoverflow.com/questions/5410430/wpf-timer-like-c-sharp-timer
             richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "Closing...");
             richTextBox_log.ScrollToEnd();
             System.Windows.Application.Current.Shutdown();
@@ -533,7 +719,6 @@ namespace DiCE
         {
             // scroll it automatically when the text is changed
             richTextBox_log.ScrollToEnd();
-            
         }
 
         
@@ -677,7 +862,7 @@ namespace DiCE
             if (isDcsLocationSet == true && isOptionsLuaLocationSet == true)
             {
                 MessageBox.Show("One-time setup is complete! DiCE will now close. Please restart DCS. Remember, you can edit your CMS profiles in the Settings > Special menu in DCS. Have fun!");
-                //dispatcherTimer.Stop() //https://stackoverflow.com/questions/5410430/wpf-timer-like-c-sharp-timer
+                dispatcherTimer.Stop(); //https://stackoverflow.com/questions/5410430/wpf-timer-like-c-sharp-timer
                 richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "Closing...");
                 richTextBox_log.ScrollToEnd();
                 System.Windows.Application.Current.Shutdown();
@@ -694,6 +879,28 @@ namespace DiCE
             {
                 //do nothing because both are false or not set
             }
+        }
+
+        private void richTextBox_log_TextInput(object sender, TextCompositionEventArgs e)
+        {
+            richTextBox_log.ScrollToEnd();
+        }
+
+        private void button_exit_Click(object sender, RoutedEventArgs e)
+        {
+            //this closes the program when the close button is clicked
+            //created to match the feel of DCS
+
+            dispatcherTimer.Stop(); //https://stackoverflow.com/questions/5410430/wpf-timer-like-c-sharp-timer
+            richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "Closing...");
+            richTextBox_log.ScrollToEnd();
+            System.Windows.Application.Current.Shutdown();
+        }
+
+        private void minimiseButton_Click(object sender, RoutedEventArgs e)
+        {
+            //https://stackoverflow.com/questions/2841258/minimize-a-window-in-wpf
+            WindowState = WindowState.Minimized;
         }
 
         private void readAndExportF18Data()
@@ -971,7 +1178,6 @@ namespace DiCE
                 richTextBox_log.ScrollToEnd();
             }
         }
-
 
 
         private void readAndExportF16Data()//similar to 'readAndExportF18Data()'
@@ -1490,20 +1696,529 @@ namespace DiCE
             }
         }
 
-        private void richTextBox_log_TextInput(object sender, TextCompositionEventArgs e)
+
+        private void readAndExportA10CData()
         {
-            richTextBox_log.ScrollToEnd();
+            //this is where you read the data from the options.lua and put them into variables
+
+            int A10C_ProgramAChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramAChaff\"] =") + 23;
+            int A10C_ProgramAChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramAChaff_indexStart);
+            string A10C_ProgramAChaff_string = optionsLuaText.Substring(A10C_ProgramAChaff_indexStart, A10C_ProgramAChaff_indexEnd - A10C_ProgramAChaff_indexStart);
+
+            int A10C_ProgramAFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramAFlare\"] =") + 23;
+            int A10C_ProgramAFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramAFlare_indexStart);
+            string A10C_ProgramAFlare_string = optionsLuaText.Substring(A10C_ProgramAFlare_indexStart, A10C_ProgramAFlare_indexEnd - A10C_ProgramAFlare_indexStart);
+
+            int A10C_ProgramAInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramAInterval\"] =") + 26;
+            int A10C_ProgramAInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramAInterval_indexStart);
+            string A10C_ProgramAInterval_string = optionsLuaText.Substring(A10C_ProgramAInterval_indexStart, A10C_ProgramAInterval_indexEnd - A10C_ProgramAInterval_indexStart);
+
+            int A10C_ProgramACycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramACycle\"] =") + 23;
+            int A10C_ProgramACycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramACycle_indexStart);
+            string A10C_ProgramACycle_string = optionsLuaText.Substring(A10C_ProgramACycle_indexStart, A10C_ProgramACycle_indexEnd - A10C_ProgramACycle_indexStart);
+
+
+            int A10C_ProgramBChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramBChaff\"] =") + 23;
+            int A10C_ProgramBChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramBChaff_indexStart);
+            string A10C_ProgramBChaff_string = optionsLuaText.Substring(A10C_ProgramBChaff_indexStart, A10C_ProgramBChaff_indexEnd - A10C_ProgramBChaff_indexStart);
+
+            int A10C_ProgramBFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramBFlare\"] =") + 23;
+            int A10C_ProgramBFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramBFlare_indexStart);
+            string A10C_ProgramBFlare_string = optionsLuaText.Substring(A10C_ProgramBFlare_indexStart, A10C_ProgramBFlare_indexEnd - A10C_ProgramBFlare_indexStart);
+
+            int A10C_ProgramBInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramBInterval\"] =") + 26;
+            int A10C_ProgramBInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramBInterval_indexStart);
+            string A10C_ProgramBInterval_string = optionsLuaText.Substring(A10C_ProgramBInterval_indexStart, A10C_ProgramBInterval_indexEnd - A10C_ProgramBInterval_indexStart);
+
+            int A10C_ProgramBCycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramBCycle\"] =") + 23;
+            int A10C_ProgramBCycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramBCycle_indexStart);
+            string A10C_ProgramBCycle_string = optionsLuaText.Substring(A10C_ProgramBCycle_indexStart, A10C_ProgramBCycle_indexEnd - A10C_ProgramBCycle_indexStart);
+
+
+            int A10C_ProgramCChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramCChaff\"] =") + 23;
+            int A10C_ProgramCChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramCChaff_indexStart);
+            string A10C_ProgramCChaff_string = optionsLuaText.Substring(A10C_ProgramCChaff_indexStart, A10C_ProgramCChaff_indexEnd - A10C_ProgramCChaff_indexStart);
+
+            int A10C_ProgramCFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramCFlare\"] =") + 23;
+            int A10C_ProgramCFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramCFlare_indexStart);
+            string A10C_ProgramCFlare_string = optionsLuaText.Substring(A10C_ProgramCFlare_indexStart, A10C_ProgramCFlare_indexEnd - A10C_ProgramCFlare_indexStart);
+
+            int A10C_ProgramCInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramCInterval\"] =") + 26;
+            int A10C_ProgramCInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramCInterval_indexStart);
+            string A10C_ProgramCInterval_string = optionsLuaText.Substring(A10C_ProgramCInterval_indexStart, A10C_ProgramCInterval_indexEnd - A10C_ProgramCInterval_indexStart);
+
+            int A10C_ProgramCCycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramCCycle\"] =") + 23;
+            int A10C_ProgramCCycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramCCycle_indexStart);
+            string A10C_ProgramCCycle_string = optionsLuaText.Substring(A10C_ProgramCCycle_indexStart, A10C_ProgramCCycle_indexEnd - A10C_ProgramCCycle_indexStart);
+
+
+            int A10C_ProgramDChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramDChaff\"] =") + 23;
+            int A10C_ProgramDChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramDChaff_indexStart);
+            string A10C_ProgramDChaff_string = optionsLuaText.Substring(A10C_ProgramDChaff_indexStart, A10C_ProgramDChaff_indexEnd - A10C_ProgramDChaff_indexStart);
+
+            int A10C_ProgramDFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramDFlare\"] =") + 23;
+            int A10C_ProgramDFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramDFlare_indexStart);
+            string A10C_ProgramDFlare_string = optionsLuaText.Substring(A10C_ProgramDFlare_indexStart, A10C_ProgramDFlare_indexEnd - A10C_ProgramDFlare_indexStart);
+
+            int A10C_ProgramDInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramDInterval\"] =") + 26;
+            int A10C_ProgramDInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramDInterval_indexStart);
+            string A10C_ProgramDInterval_string = optionsLuaText.Substring(A10C_ProgramDInterval_indexStart, A10C_ProgramDInterval_indexEnd - A10C_ProgramDInterval_indexStart);
+
+            int A10C_ProgramDCycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramDCycle\"] =") + 23;
+            int A10C_ProgramDCycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramDCycle_indexStart);
+            string A10C_ProgramDCycle_string = optionsLuaText.Substring(A10C_ProgramDCycle_indexStart, A10C_ProgramDCycle_indexEnd - A10C_ProgramDCycle_indexStart);
+
+
+            int A10C_ProgramEChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramEChaff\"] =") + 23;
+            int A10C_ProgramEChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramEChaff_indexStart);
+            string A10C_ProgramEChaff_string = optionsLuaText.Substring(A10C_ProgramEChaff_indexStart, A10C_ProgramEChaff_indexEnd - A10C_ProgramEChaff_indexStart);
+
+            int A10C_ProgramEFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramEFlare\"] =") + 23;
+            int A10C_ProgramEFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramEFlare_indexStart);
+            string A10C_ProgramEFlare_string = optionsLuaText.Substring(A10C_ProgramEFlare_indexStart, A10C_ProgramEFlare_indexEnd - A10C_ProgramEFlare_indexStart);
+
+            int A10C_ProgramEInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramEInterval\"] =") + 26;
+            int A10C_ProgramEInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramEInterval_indexStart);
+            string A10C_ProgramEInterval_string = optionsLuaText.Substring(A10C_ProgramEInterval_indexStart, A10C_ProgramEInterval_indexEnd - A10C_ProgramEInterval_indexStart);
+
+            int A10C_ProgramECycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramECycle\"] =") + 23;
+            int A10C_ProgramECycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramECycle_indexStart);
+            string A10C_ProgramECycle_string = optionsLuaText.Substring(A10C_ProgramECycle_indexStart, A10C_ProgramECycle_indexEnd - A10C_ProgramECycle_indexStart);
+
+
+            int A10C_ProgramFChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramFChaff\"] =") + 23;
+            int A10C_ProgramFChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramFChaff_indexStart);
+            string A10C_ProgramFChaff_string = optionsLuaText.Substring(A10C_ProgramFChaff_indexStart, A10C_ProgramFChaff_indexEnd - A10C_ProgramFChaff_indexStart);
+
+            int A10C_ProgramFFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramFFlare\"] =") + 23;
+            int A10C_ProgramFFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramFFlare_indexStart);
+            string A10C_ProgramFFlare_string = optionsLuaText.Substring(A10C_ProgramFFlare_indexStart, A10C_ProgramFFlare_indexEnd - A10C_ProgramFFlare_indexStart);
+
+            int A10C_ProgramFInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramFInterval\"] =") + 26;
+            int A10C_ProgramFInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramFInterval_indexStart);
+            string A10C_ProgramFInterval_string = optionsLuaText.Substring(A10C_ProgramFInterval_indexStart, A10C_ProgramFInterval_indexEnd - A10C_ProgramFInterval_indexStart);
+
+            int A10C_ProgramFCycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramFCycle\"] =") + 23;
+            int A10C_ProgramFCycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramFCycle_indexStart);
+            string A10C_ProgramFCycle_string = optionsLuaText.Substring(A10C_ProgramFCycle_indexStart, A10C_ProgramFCycle_indexEnd - A10C_ProgramFCycle_indexStart);
+
+
+            int A10C_ProgramGChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramGChaff\"] =") + 23;
+            int A10C_ProgramGChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramGChaff_indexStart);
+            string A10C_ProgramGChaff_string = optionsLuaText.Substring(A10C_ProgramGChaff_indexStart, A10C_ProgramGChaff_indexEnd - A10C_ProgramGChaff_indexStart);
+
+            int A10C_ProgramGFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramGFlare\"] =") + 23;
+            int A10C_ProgramGFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramGFlare_indexStart);
+            string A10C_ProgramGFlare_string = optionsLuaText.Substring(A10C_ProgramGFlare_indexStart, A10C_ProgramGFlare_indexEnd - A10C_ProgramGFlare_indexStart);
+
+            int A10C_ProgramGInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramGInterval\"] =") + 26;
+            int A10C_ProgramGInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramGInterval_indexStart);
+            string A10C_ProgramGInterval_string = optionsLuaText.Substring(A10C_ProgramGInterval_indexStart, A10C_ProgramGInterval_indexEnd - A10C_ProgramGInterval_indexStart);
+
+            int A10C_ProgramGCycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramGCycle\"] =") + 23;
+            int A10C_ProgramGCycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramGCycle_indexStart);
+            string A10C_ProgramGCycle_string = optionsLuaText.Substring(A10C_ProgramGCycle_indexStart, A10C_ProgramGCycle_indexEnd - A10C_ProgramGCycle_indexStart);
+
+
+            int A10C_ProgramHChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramHChaff\"] =") + 23;
+            int A10C_ProgramHChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramHChaff_indexStart);
+            string A10C_ProgramHChaff_string = optionsLuaText.Substring(A10C_ProgramHChaff_indexStart, A10C_ProgramHChaff_indexEnd - A10C_ProgramHChaff_indexStart);
+
+            int A10C_ProgramHFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramHFlare\"] =") + 23;
+            int A10C_ProgramHFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramHFlare_indexStart);
+            string A10C_ProgramHFlare_string = optionsLuaText.Substring(A10C_ProgramHFlare_indexStart, A10C_ProgramHFlare_indexEnd - A10C_ProgramHFlare_indexStart);
+
+            int A10C_ProgramHInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramHInterval\"] =") + 26;
+            int A10C_ProgramHInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramHInterval_indexStart);
+            string A10C_ProgramHInterval_string = optionsLuaText.Substring(A10C_ProgramHInterval_indexStart, A10C_ProgramHInterval_indexEnd - A10C_ProgramHInterval_indexStart);
+
+            int A10C_ProgramHCycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramHCycle\"] =") + 23;
+            int A10C_ProgramHCycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramHCycle_indexStart);
+            string A10C_ProgramHCycle_string = optionsLuaText.Substring(A10C_ProgramHCycle_indexStart, A10C_ProgramHCycle_indexEnd - A10C_ProgramHCycle_indexStart);
+
+
+            int A10C_ProgramIChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramIChaff\"] =") + 23;
+            int A10C_ProgramIChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramIChaff_indexStart);
+            string A10C_ProgramIChaff_string = optionsLuaText.Substring(A10C_ProgramIChaff_indexStart, A10C_ProgramIChaff_indexEnd - A10C_ProgramIChaff_indexStart);
+
+            int A10C_ProgramIFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramIFlare\"] =") + 23;
+            int A10C_ProgramIFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramIFlare_indexStart);
+            string A10C_ProgramIFlare_string = optionsLuaText.Substring(A10C_ProgramIFlare_indexStart, A10C_ProgramIFlare_indexEnd - A10C_ProgramIFlare_indexStart);
+
+            int A10C_ProgramIInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramIInterval\"] =") + 26;
+            int A10C_ProgramIInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramIInterval_indexStart);
+            string A10C_ProgramIInterval_string = optionsLuaText.Substring(A10C_ProgramIInterval_indexStart, A10C_ProgramIInterval_indexEnd - A10C_ProgramIInterval_indexStart);
+
+            int A10C_ProgramICycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramICycle\"] =") + 23;
+            int A10C_ProgramICycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramICycle_indexStart);
+            string A10C_ProgramICycle_string = optionsLuaText.Substring(A10C_ProgramICycle_indexStart, A10C_ProgramICycle_indexEnd - A10C_ProgramICycle_indexStart);
+
+
+            int A10C_ProgramJChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramJChaff\"] =") + 23;
+            int A10C_ProgramJChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramJChaff_indexStart);
+            string A10C_ProgramJChaff_string = optionsLuaText.Substring(A10C_ProgramJChaff_indexStart, A10C_ProgramJChaff_indexEnd - A10C_ProgramJChaff_indexStart);
+
+            int A10C_ProgramJFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramJFlare\"] =") + 23;
+            int A10C_ProgramJFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramJFlare_indexStart);
+            string A10C_ProgramJFlare_string = optionsLuaText.Substring(A10C_ProgramJFlare_indexStart, A10C_ProgramJFlare_indexEnd - A10C_ProgramJFlare_indexStart);
+
+            int A10C_ProgramJInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramJInterval\"] =") + 26;
+            int A10C_ProgramJInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramJInterval_indexStart);
+            string A10C_ProgramJInterval_string = optionsLuaText.Substring(A10C_ProgramJInterval_indexStart, A10C_ProgramJInterval_indexEnd - A10C_ProgramJInterval_indexStart);
+
+            int A10C_ProgramJCycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramJCycle\"] =") + 23;
+            int A10C_ProgramJCycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramJCycle_indexStart);
+            string A10C_ProgramJCycle_string = optionsLuaText.Substring(A10C_ProgramJCycle_indexStart, A10C_ProgramJCycle_indexEnd - A10C_ProgramJCycle_indexStart);
+
+
+            int A10C_ProgramKChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramKChaff\"] =") + 23;
+            int A10C_ProgramKChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramKChaff_indexStart);
+            string A10C_ProgramKChaff_string = optionsLuaText.Substring(A10C_ProgramKChaff_indexStart, A10C_ProgramKChaff_indexEnd - A10C_ProgramKChaff_indexStart);
+
+            int A10C_ProgramKFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramKFlare\"] =") + 23;
+            int A10C_ProgramKFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramKFlare_indexStart);
+            string A10C_ProgramKFlare_string = optionsLuaText.Substring(A10C_ProgramKFlare_indexStart, A10C_ProgramKFlare_indexEnd - A10C_ProgramKFlare_indexStart);
+
+            int A10C_ProgramKInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramKInterval\"] =") + 26;
+            int A10C_ProgramKInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramKInterval_indexStart);
+            string A10C_ProgramKInterval_string = optionsLuaText.Substring(A10C_ProgramKInterval_indexStart, A10C_ProgramKInterval_indexEnd - A10C_ProgramKInterval_indexStart);
+
+            int A10C_ProgramKCycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramKCycle\"] =") + 23;
+            int A10C_ProgramKCycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramKCycle_indexStart);
+            string A10C_ProgramKCycle_string = optionsLuaText.Substring(A10C_ProgramKCycle_indexStart, A10C_ProgramKCycle_indexEnd - A10C_ProgramKCycle_indexStart);
+
+
+            int A10C_ProgramLChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramLChaff\"] =") + 23;
+            int A10C_ProgramLChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramLChaff_indexStart);
+            string A10C_ProgramLChaff_string = optionsLuaText.Substring(A10C_ProgramLChaff_indexStart, A10C_ProgramLChaff_indexEnd - A10C_ProgramLChaff_indexStart);
+
+            int A10C_ProgramLFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramLFlare\"] =") + 23;
+            int A10C_ProgramLFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramLFlare_indexStart);
+            string A10C_ProgramLFlare_string = optionsLuaText.Substring(A10C_ProgramLFlare_indexStart, A10C_ProgramLFlare_indexEnd - A10C_ProgramLFlare_indexStart);
+
+            int A10C_ProgramLInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramLInterval\"] =") + 26;
+            int A10C_ProgramLInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramLInterval_indexStart);
+            string A10C_ProgramLInterval_string = optionsLuaText.Substring(A10C_ProgramLInterval_indexStart, A10C_ProgramLInterval_indexEnd - A10C_ProgramLInterval_indexStart);
+
+            int A10C_ProgramLCycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramLCycle\"] =") + 23;
+            int A10C_ProgramLCycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramLCycle_indexStart);
+            string A10C_ProgramLCycle_string = optionsLuaText.Substring(A10C_ProgramLCycle_indexStart, A10C_ProgramLCycle_indexEnd - A10C_ProgramLCycle_indexStart);
+
+
+            int A10C_ProgramMChaff_indexStart = optionsLuaText.IndexOf("[\"A10CProgramMChaff\"] =") + 23;
+            int A10C_ProgramMChaff_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramMChaff_indexStart);
+            string A10C_ProgramMChaff_string = optionsLuaText.Substring(A10C_ProgramMChaff_indexStart, A10C_ProgramMChaff_indexEnd - A10C_ProgramMChaff_indexStart);
+
+            int A10C_ProgramMFlare_indexStart = optionsLuaText.IndexOf("[\"A10CProgramMFlare\"] =") + 23;
+            int A10C_ProgramMFlare_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramMFlare_indexStart);
+            string A10C_ProgramMFlare_string = optionsLuaText.Substring(A10C_ProgramMFlare_indexStart, A10C_ProgramMFlare_indexEnd - A10C_ProgramMFlare_indexStart);
+
+            int A10C_ProgramMInterval_indexStart = optionsLuaText.IndexOf("[\"A10CProgramMInterval\"] =") + 26;
+            int A10C_ProgramMInterval_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramMInterval_indexStart);
+            string A10C_ProgramMInterval_string = optionsLuaText.Substring(A10C_ProgramMInterval_indexStart, A10C_ProgramMInterval_indexEnd - A10C_ProgramMInterval_indexStart);
+
+            int A10C_ProgramMCycle_indexStart = optionsLuaText.IndexOf("[\"A10CProgramMCycle\"] =") + 23;
+            int A10C_ProgramMCycle_indexEnd = optionsLuaText.IndexOf(",", A10C_ProgramMCycle_indexStart);
+            string A10C_ProgramMCycle_string = optionsLuaText.Substring(A10C_ProgramMCycle_indexStart, A10C_ProgramMCycle_indexEnd - A10C_ProgramMCycle_indexStart);
+
+
+            //MessageBox.Show("|" + A10C_Manual1Chaff_string + "|" + A10C_Manual1Flare_string + "|" + A10C_Manual1Interval_string + "|" + A10C_Manual1Cycle_string + "|");
+
+
+
+            //then you merge that info with the formated cms.lua and export it to the proper folder location
+
+            string[] luaExportString = {
+                                "local gettext = require(\"i_18n\")",
+                "_ = gettext.translate",
+                "",
+                "programs = {}",
+                "",
+                "-- Old generation radar SAM",
+                "programs['A'] = {}",
+                "programs['A'][\"chaff\"] =" + A10C_ProgramAChaff_string,
+                "programs['A'][\"flare\"] =" + A10C_ProgramAFlare_string,
+                "programs['A'][\"intv\"]  =" + A10C_ProgramAInterval_string,
+                "programs['A'][\"cycle\"] =" + A10C_ProgramACycle_string,
+                "",
+                "-- Current generation radar SAM",
+                "programs['B'] = {}",
+                "programs['B'][\"chaff\"] =" + A10C_ProgramBChaff_string,
+                "programs['B'][\"flare\"] =" + A10C_ProgramBFlare_string,
+                "programs['B'][\"intv\"]  =" + A10C_ProgramBInterval_string,
+                "programs['B'][\"cycle\"] =" + A10C_ProgramBCycle_string,
+                "",
+                "-- IR SAM",
+                "programs['C'] = {}",
+                "programs['C'][\"chaff\"] =" + A10C_ProgramCChaff_string,
+                "programs['C'][\"flare\"] =" + A10C_ProgramCFlare_string,
+                "programs['C'][\"intv\"]  =" + A10C_ProgramCInterval_string,
+                "programs['C'][\"cycle\"] =" + A10C_ProgramCCycle_string,
+                "",
+                "-- Default manual presets",
+                "-- Mix 1",
+                "programs['D'] = {}",
+                "programs['D'][\"chaff\"] =" + A10C_ProgramDChaff_string,
+                "programs['D'][\"flare\"] =" + A10C_ProgramDFlare_string,
+                "programs['D'][\"intv\"]  =" + A10C_ProgramDInterval_string,
+                "programs['D'][\"cycle\"] =" + A10C_ProgramDCycle_string,
+                "",
+                "-- Mix 2",
+                "programs['E'] = {}",
+                "programs['E'][\"chaff\"] =" + A10C_ProgramEChaff_string,
+                "programs['E'][\"flare\"] =" + A10C_ProgramEFlare_string,
+                "programs['E'][\"intv\"]  =" + A10C_ProgramEInterval_string,
+                "programs['E'][\"cycle\"] =" + A10C_ProgramECycle_string,
+                "",
+                "-- Mix 3",
+                "programs['F'] = {}",
+                "programs['F'][\"chaff\"] =" + A10C_ProgramFChaff_string,
+                "programs['F'][\"flare\"] =" + A10C_ProgramFFlare_string,
+                "programs['F'][\"intv\"]  =" + A10C_ProgramFInterval_string,
+                "programs['F'][\"cycle\"] =" + A10C_ProgramFCycle_string,
+                "",
+                "-- Mix 4",
+                "programs['G'] = {}",
+                "programs['G'][\"chaff\"] =" + A10C_ProgramGChaff_string,
+                "programs['G'][\"flare\"] =" + A10C_ProgramGFlare_string,
+                "programs['G'][\"intv\"]  =" + A10C_ProgramGInterval_string,
+                "programs['G'][\"cycle\"] =" + A10C_ProgramGCycle_string,
+                "",
+                "-- Chaff single",
+                "programs['H'] = {}",
+                "programs['H'][\"chaff\"] =" + A10C_ProgramHChaff_string,
+                "programs['H'][\"flare\"] =" + A10C_ProgramHFlare_string,
+                "programs['H'][\"intv\"]  =" + A10C_ProgramHInterval_string,
+                "programs['H'][\"cycle\"] =" + A10C_ProgramHCycle_string,
+                "",
+                "-- Chaff pair",
+                "programs['I'] = {}",
+                "programs['I'][\"chaff\"] =" + A10C_ProgramIChaff_string,
+                "programs['I'][\"flare\"] =" + A10C_ProgramIFlare_string,
+                "programs['I'][\"intv\"]  =" + A10C_ProgramIInterval_string,
+                "programs['I'][\"cycle\"] =" + A10C_ProgramICycle_string,
+                "",
+                "-- Flare single",
+                "programs['J'] = {}",
+                "programs['J'][\"chaff\"] =" + A10C_ProgramJChaff_string,
+                "programs['J'][\"flare\"] =" + A10C_ProgramJFlare_string,
+                "programs['J'][\"intv\"]  =" + A10C_ProgramJInterval_string,
+                "programs['J'][\"cycle\"] =" + A10C_ProgramJCycle_string,
+                "",
+                "-- Flare pair",
+                "programs['K'] = {}",
+                "programs['K'][\"chaff\"] =" + A10C_ProgramKChaff_string,
+                "programs['K'][\"flare\"] =" + A10C_ProgramKFlare_string,
+                "programs['K'][\"intv\"]  =" + A10C_ProgramKInterval_string,
+                "programs['K'][\"cycle\"] =" + A10C_ProgramKCycle_string,
+                "",
+                "-- Chaff pre-empt",
+                "programs['L'] = {}",
+                "programs['L'][\"chaff\"] =" + A10C_ProgramAChaff_string,
+                "programs['L'][\"flare\"] =" + A10C_ProgramLFlare_string,
+                "programs['L'][\"intv\"]  =" + A10C_ProgramLInterval_string,
+                "programs['L'][\"cycle\"] =" + A10C_ProgramLCycle_string,
+                "",
+                "-- Flare pre-empt",
+                "programs['M'] = {}",
+                "programs['M'][\"chaff\"] =" + A10C_ProgramMChaff_string,
+                "programs['M'][\"flare\"] =" + A10C_ProgramMFlare_string,
+                "programs['M'][\"intv\"]  =" + A10C_ProgramMInterval_string,
+                "programs['M'][\"cycle\"] =" + A10C_ProgramMCycle_string,
+                "",
+                "",
+                "",
+                "ContainerChaffCapacity = 120",
+                "",
+                "ContainerFlareCapacity = 60",
+                "",
+                "NumberOfContiners      = 4",
+                "",
+                "AN_ALE_40V_FAILURE_TOTAL = 0",
+                "AN_ALE_40V_FAILURE_CONTAINER_LEFT_WING	= 1",
+                "AN_ALE_40V_FAILURE_CONTAINER_LEFT_GEAR	= 2",
+                "AN_ALE_40V_FAILURE_CONTAINER_RIGHT_GEAR	= 3",
+                "AN_ALE_40V_FAILURE_CONTAINER_RIGHT_WING	= 4",
+                "",
+                "Damage = {	{Failure = AN_ALE_40V_FAILURE_TOTAL, Failure_name = \"AN_ALE_40V_FAILURE_TOTAL\", Failure_editor_name = _(\"AN/ALE-40(V) total failure\"),  Element = 10, Integrity_Treshold = 0.5, work_time_to_fail_probability = 0.5, work_time_to_fail = 3600*300},",
+                "		{Failure = AN_ALE_40V_FAILURE_CONTAINER_LEFT_WING, Failure_name = \"AN_ALE_40V_FAILURE_CONTAINER_LEFT_WING\", Failure_editor_name = _(\"AN/ALE-40(V) left wing container failure\"),  Element = 23, Integrity_Treshold = 0.75, work_time_to_fail_probability = 0.5, work_time_to_fail = 3600*300},",
+                "		{Failure = AN_ALE_40V_FAILURE_CONTAINER_LEFT_GEAR, Failure_name = \"AN_ALE_40V_FAILURE_CONTAINER_LEFT_GEAR\", Failure_editor_name = _(\"AN/ALE-40(V) left gear container failure\"),  Element = 15, Integrity_Treshold = 0.75, work_time_to_fail_probability = 0.5, work_time_to_fail = 3600*300},",
+                "		{Failure = AN_ALE_40V_FAILURE_CONTAINER_RIGHT_GEAR, Failure_name = \"AN_ALE_40V_FAILURE_CONTAINER_RIGHT_GEAR\", Failure_editor_name = _(\"AN/ALE-40(V) right gear container failure\"),  Element = 16, Integrity_Treshold = 0.75, work_time_to_fail_probability = 0.5, work_time_to_fail = 3600*300},",
+                "		{Failure = AN_ALE_40V_FAILURE_CONTAINER_RIGHT_WING, Failure_name = \"AN_ALE_40V_FAILURE_CONTAINER_RIGHT_WING\", Failure_editor_name = _(\"AN/ALE-40(V) right wing container failure\"),  Element = 24, Integrity_Treshold = 0.75, work_time_to_fail_probability = 0.5, work_time_to_fail = 3600*300},",
+                "}",
+                "",
+                "need_to_be_closed = true -- lua_state  will be closed in post_initialize()",
+                "--Exported via DiCE by Bailey on " + System.DateTime.Now};
+
+            //if DiCE detects that the A-10C is installed
+            if (optionsLuaText.Contains(detection_A10C_DiCE) && optionsLuaText.Contains(detection_A10C_vanilla))
+            {//create the directory
+                System.IO.Directory.CreateDirectory(cmdsLua_A10C_FolderPath);
+
+                try
+                {//then try to write the file
+                    System.IO.File.WriteAllLines(cmdsLua_A10C_fullPath, luaExportString);
+                    //https://stackoverflow.com/questions/5920882/file-move-does-not-work-file-already-exists
+                    //playCompleteSound();
+
+                    richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "A-10C CMS file exported.");
+                    richTextBox_log.ScrollToEnd();
+                }
+                catch (IOException g)
+                {
+                    richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "DiCE could not write the A-10C CMS lua.");
+                    richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + g.Message);
+                    richTextBox_log.ScrollToEnd();
+                }
+            }
+
+            //if DiCE detects that the A-10C2 is installed
+            if (optionsLuaText.Contains(detection_A10C2_DiCE) && optionsLuaText.Contains(detection_A10C2_vanilla))
+            {//create the directory
+                System.IO.Directory.CreateDirectory(cmdsLua_A10C2_FolderPath);
+
+                try
+                {//then try to write the file
+                    System.IO.File.WriteAllLines(cmdsLua_A10C2_fullPath, luaExportString);
+                    //https://stackoverflow.com/questions/5920882/file-move-does-not-work-file-already-exists
+                    //playCompleteSound();
+
+                    richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "A-10C2 CMS file exported.");
+                    richTextBox_log.ScrollToEnd();
+                }
+                catch (IOException g)
+                {
+                    richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "DiCE could not write the A-10C2 CMS lua.");
+                    richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + g.Message);
+                    richTextBox_log.ScrollToEnd();
+                }
+            }
         }
 
-        private void button_exit_Click(object sender, RoutedEventArgs e)
+        private void readAndExportAV8BData()//TODO: code this
         {
-            //this closes the program when the close button is clicked
-            //created to match the feel of DCS
+            //All Expendables
+            string tempLength = ("[\"AV8BAllExpendablesChaffBurstQuantity\"] =");
+            int AV8BAllExpendablesChaffBurstQuantity_indexStart = optionsLuaText.IndexOf("[\"AV8BAllExpendablesChaffBurstQuantity\"] =") + 42;
+            int AV8BAllExpendablesChaffBurstQuantity_indexEnd = optionsLuaText.IndexOf(",", AV8BAllExpendablesChaffBurstQuantity_indexStart);
+            string AV8BAllExpendablesChaffBurstQuantity_string = optionsLuaText.Substring(AV8BAllExpendablesChaffBurstQuantity_indexStart, AV8BAllExpendablesChaffBurstQuantity_indexEnd - AV8BAllExpendablesChaffBurstQuantity_indexStart);
 
-            //dispatcherTimer.Stop() //https://stackoverflow.com/questions/5410430/wpf-timer-like-c-sharp-timer
-            richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "Closing...");
-            richTextBox_log.ScrollToEnd();
-            System.Windows.Application.Current.Shutdown();
+            tempLength = ("[\"AV8BAllExpendablesChaffBurstInterval\"] =");//used to have a little more automation and a little less manual error
+            int AV8BAllExpendablesChaffBurstInterval_indexStart = optionsLuaText.IndexOf(tempLength) + tempLength.Length;
+            int AV8BAllExpendablesChaffBurstInterval_indexEnd = optionsLuaText.IndexOf(",", AV8BAllExpendablesChaffBurstInterval_indexStart);
+            string AV8BAllExpendablesChaffBurstInterval_string = optionsLuaText.Substring(AV8BAllExpendablesChaffBurstInterval_indexStart, AV8BAllExpendablesChaffBurstInterval_indexEnd - AV8BAllExpendablesChaffBurstInterval_indexStart);
+
+            tempLength = ("[\"AV8BAllExpendablesChaffSalvoQuantity\"] =");
+            int AV8BAllExpendablesChaffSalvoQuantity_indexStart = optionsLuaText.IndexOf(tempLength) + tempLength.Length;
+            int AV8BAllExpendablesChaffSalvoQuantity_indexEnd = optionsLuaText.IndexOf(",", AV8BAllExpendablesChaffSalvoQuantity_indexStart);
+            string AV8BAllExpendablesChaffSalvoQuantity_string = optionsLuaText.Substring(AV8BAllExpendablesChaffSalvoQuantity_indexStart, AV8BAllExpendablesChaffSalvoQuantity_indexEnd - AV8BAllExpendablesChaffSalvoQuantity_indexStart);
+
+            tempLength = ("[\"AV8BAllExpendablesChaffSalvoInterval\"] =");
+            int AV8BAllExpendablesChaffSalvoInterval_indexStart = optionsLuaText.IndexOf(tempLength) + tempLength.Length;
+            int AV8BAllExpendablesChaffSalvoInterval_indexEnd = optionsLuaText.IndexOf(",", AV8BAllExpendablesChaffSalvoInterval_indexStart);
+            string AV8BAllExpendablesChaffSalvoInterval_string = optionsLuaText.Substring(AV8BAllExpendablesChaffSalvoInterval_indexStart, AV8BAllExpendablesChaffSalvoInterval_indexEnd - AV8BAllExpendablesChaffSalvoInterval_indexStart);
+
+            tempLength = ("[\"AV8BAllExpendablesFlaresSalvoQuantity\"] =");
+            int AV8BAllExpendablesFlaresSalvoQuantity_indexStart = optionsLuaText.IndexOf(tempLength) + tempLength.Length;
+            int AV8BAllExpendablesFlaresSalvoQuantity_indexEnd = optionsLuaText.IndexOf(",", AV8BAllExpendablesFlaresSalvoQuantity_indexStart);
+            string AV8BAllExpendablesFlaresSalvoQuantity_string = optionsLuaText.Substring(AV8BAllExpendablesFlaresSalvoQuantity_indexStart, AV8BAllExpendablesFlaresSalvoQuantity_indexEnd - AV8BAllExpendablesFlaresSalvoQuantity_indexStart);
+
+            tempLength = ("[\"AV8BAllExpendablesFlaresSalvoInterval\"] =");
+            int AV8BAllExpendablesFlaresSalvoInterval_indexStart = optionsLuaText.IndexOf(tempLength) + tempLength.Length;
+            int AV8BAllExpendablesFlaresSalvoInterval_indexEnd = optionsLuaText.IndexOf(",", AV8BAllExpendablesFlaresSalvoInterval_indexStart);
+            string AV8BAllExpendablesFlaresSalvoInterval_string = optionsLuaText.Substring(AV8BAllExpendablesFlaresSalvoInterval_indexStart, AV8BAllExpendablesFlaresSalvoInterval_indexEnd - AV8BAllExpendablesFlaresSalvoInterval_indexStart);
+
+            //Chaff Only
+
+            tempLength = ("[\"AV8BChaffOnlyChaffBurstQuantity\"] =");
+            int AV8BChaffOnlyChaffBurstQuantity_indexStart = optionsLuaText.IndexOf(tempLength) + tempLength.Length;
+            int AV8BChaffOnlyChaffBurstQuantity_indexEnd = optionsLuaText.IndexOf(",", AV8BChaffOnlyChaffBurstQuantity_indexStart);
+            string AV8BChaffOnlyChaffBurstQuantity_string = optionsLuaText.Substring(AV8BChaffOnlyChaffBurstQuantity_indexStart, AV8BChaffOnlyChaffBurstQuantity_indexEnd - AV8BChaffOnlyChaffBurstQuantity_indexStart);
+
+            tempLength = ("[\"AV8BChaffOnlyChaffBurstInterval\"] =");
+            int AV8BChaffOnlyChaffBurstInterval_indexStart = optionsLuaText.IndexOf(tempLength) + tempLength.Length;
+            int AV8BChaffOnlyChaffBurstInterval_indexEnd = optionsLuaText.IndexOf(",", AV8BChaffOnlyChaffBurstInterval_indexStart);
+            string AV8BChaffOnlyChaffBurstInterval_string = optionsLuaText.Substring(AV8BChaffOnlyChaffBurstInterval_indexStart, AV8BChaffOnlyChaffBurstInterval_indexEnd - AV8BChaffOnlyChaffBurstInterval_indexStart);
+
+            tempLength = ("[\"AV8BChaffOnlyChaffSalvoQuantity\"] =");
+            int AV8BChaffOnlyChaffSalvoQuantity_indexStart = optionsLuaText.IndexOf(tempLength) + tempLength.Length;
+            int AV8BChaffOnlyChaffSalvoQuantity_indexEnd = optionsLuaText.IndexOf(",", AV8BChaffOnlyChaffSalvoQuantity_indexStart);
+            string AV8BChaffOnlyChaffSalvoQuantity_string = optionsLuaText.Substring(AV8BChaffOnlyChaffSalvoQuantity_indexStart, AV8BChaffOnlyChaffSalvoQuantity_indexEnd - AV8BChaffOnlyChaffSalvoQuantity_indexStart);
+
+            tempLength = ("[\"AV8BChaffOnlyChaffSalvoInterval\"] =");
+            int AV8BChaffOnlyChaffSalvoInterval_indexStart = optionsLuaText.IndexOf(tempLength) + tempLength.Length;
+            int AV8BChaffOnlyChaffSalvoInterval_indexEnd = optionsLuaText.IndexOf(",", AV8BChaffOnlyChaffSalvoInterval_indexStart);
+            string AV8BChaffOnlyChaffSalvoInterval_string = optionsLuaText.Substring(AV8BChaffOnlyChaffSalvoInterval_indexStart, AV8BChaffOnlyChaffSalvoInterval_indexEnd - AV8BChaffOnlyChaffSalvoInterval_indexStart);
+
+            //Flares Only
+
+            tempLength = ("[\"AV8BFlaresOnlyFlaresSalvoQuantity\"] =");
+            int AV8BFlaresOnlyFlaresSalvoQuantity_indexStart = optionsLuaText.IndexOf(tempLength) + tempLength.Length;
+            int AV8BFlaresOnlyFlaresSalvoQuantity_indexEnd = optionsLuaText.IndexOf(",", AV8BFlaresOnlyFlaresSalvoQuantity_indexStart);
+            string AV8BFlaresOnlyFlaresSalvoQuantity_string = optionsLuaText.Substring(AV8BFlaresOnlyFlaresSalvoQuantity_indexStart, AV8BFlaresOnlyFlaresSalvoQuantity_indexEnd - AV8BFlaresOnlyFlaresSalvoQuantity_indexStart);
+
+            tempLength = ("[\"AV8BFlaresOnlyChaffSalvoInterval\"] =");
+            int AV8BFlaresOnlyChaffSalvoInterval_indexStart = optionsLuaText.IndexOf(tempLength) + tempLength.Length;
+            int AV8BFlaresOnlyChaffSalvoInterval_indexEnd = optionsLuaText.IndexOf(",", AV8BFlaresOnlyChaffSalvoInterval_indexStart);
+            string AV8BFlaresOnlyChaffSalvoInterval_string = optionsLuaText.Substring(AV8BFlaresOnlyChaffSalvoInterval_indexStart, AV8BFlaresOnlyChaffSalvoInterval_indexEnd - AV8BFlaresOnlyChaffSalvoInterval_indexStart);
+
+
+            string[] luaExportString = {
+                "local gettext = require(\"i_18n\")",
+                "_ = gettext.translate",
+                "",
+                "-- Chaff Burst Values",
+                "-- BQTY: 1 to 15. Special values: -1 = Continuous (will use ALL chaff); -2 = Random (will dispense between 1 to 6 chaff)",
+                "-- BINT: 0.1 to 1.5 seconds. Special values: -2 = Random (will set an interval between 0.1 and 0.4 seconds)",
+                "",
+                "-- Chaff Salvo Values",
+                "-- SQTY: 1 to 15.",
+                "-- SINT: 1 to 15 seconds.",
+                "",
+                "-- Flare Salvo Values",
+                "-- SQTY: 1 to 15.",
+                "-- SINT: 1 to 15 seconds.",
+                "",
+                "--All Expendables",
+                "EW_ALL_CHAFF_BQTY =" + AV8BAllExpendablesChaffBurstQuantity_string + ";",
+                "EW_ALL_CHAFF_BINT =" + AV8BAllExpendablesChaffBurstInterval_string + ";",
+                "EW_ALL_CHAFF_SQTY =" + AV8BAllExpendablesChaffSalvoQuantity_string + ";",
+                "EW_ALL_CHAFF_SINT =" + AV8BAllExpendablesChaffSalvoInterval_string + ";",
+                "EW_ALL_FLARES_SQTY =" + AV8BAllExpendablesFlaresSalvoQuantity_string + ";",
+                "EW_ALL_FLARES_SINT =" + AV8BAllExpendablesFlaresSalvoInterval_string + ";",
+                "",
+                "--Chaff Only",
+                "EW_CHAFF_BQTY =" + AV8BChaffOnlyChaffBurstQuantity_string + ";",
+                "EW_CHAFF_BINT =" + AV8BChaffOnlyChaffBurstInterval_string + ";",
+                "EW_CHAFF_SQTY =" + AV8BChaffOnlyChaffSalvoQuantity_string + ";",
+                "EW_CHAFF_SINT =" + AV8BChaffOnlyChaffSalvoInterval_string + ";",
+                "",
+                "--Flares Only",
+                "EW_FLARES_SQTY =" + AV8BFlaresOnlyFlaresSalvoQuantity_string + ";",
+                "EW_FLARES_SINT =" + AV8BFlaresOnlyChaffSalvoInterval_string + ";",
+                "",
+                "need_to_be_closed = true",
+                "",
+
+                "--Exported via DiCE by Bailey on " + System.DateTime.Now};
+            System.IO.Directory.CreateDirectory(cmdsLua_AV8B_FolderPath);
+
+            try
+            {
+                System.IO.File.WriteAllLines(cmdsLua_AV8B_fullPath, luaExportString);
+                //https://stackoverflow.com/questions/5920882/file-move-does-not-work-file-already-exists
+                //playCompleteSound();
+
+                richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "AV-8B CMS file exported.");
+                richTextBox_log.ScrollToEnd();
+            }
+            catch (IOException h)
+            {
+                richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "DiCE could not write the AV-8B CMS lua.");
+                richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + h.Message);
+                richTextBox_log.ScrollToEnd();
+            }
         }
+        
     }
 }

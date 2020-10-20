@@ -128,7 +128,12 @@
     <Resource Include="DiCE_icon2.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Assets\minus_hover.png" />
+    <Resource Include="Assets\minus_normal_pressed.png" />
+    <Resource Include="Assets\icon-A10C.png" />
     <Content Include="Assets\Play02.ogg" />
+    <Resource Include="Assets\plus_hover.png" />
+    <Resource Include="Assets\plus_normal_pressed.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
