@@ -36,7 +36,7 @@
 
         <!--// Title Bar //-->
 
-        <TextBlock Grid.Row="1" Grid.Column="1"  Text="DiCE - DCS Integrated Countermeasure Editor v3 by Bailey" 
+        <TextBlock Grid.Row="1" Grid.Column="1"  Text="DiCE - DCS Integrated Countermeasure Editor v4 by Bailey" 
                    VerticalAlignment="Top" Width="Auto" Background="#2d3e50" Foreground="#bccece" FontSize="18" 
                    FontWeight="Bold" FontStyle="Italic" Grid.ColumnSpan="5" Height="24" Grid.RowSpan="1" PreviewMouseLeftButtonDown="titleBar_leftButtonDown">
         </TextBlock>
@@ -355,6 +355,29 @@
             </Button>
 
             <TextBlock Height="25" Text="DCS A-10C" HorizontalAlignment="Center" FontFamily="Arial Black" FontSize="20"  />
+            <!--// uses as a spacer //-->
+
+            <Button x:Name="mainPageDiceLogo6" HorizontalAlignment="Center" Width="86"  Margin="20,3" >
+                <Button.Template>
+                    <ControlTemplate>
+                        <Image Source="Assets/icon-AV8B.png"/>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <TextBlock Height="25" Text="DCS AV-8B" HorizontalAlignment="Center" FontFamily="Arial Black" FontSize="20"  />
+            <!--// uses as a spacer //-->
+
+            <Button x:Name="mainPageDiceLogo7" HorizontalAlignment="Center" Width="86"  Margin="20,3" >
+                <Button.Template>
+                    <ControlTemplate>
+                        <Image Source="/Assets/icon-M2000C.png"/>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <TextBlock Height="25" Text="DCS M2000C" HorizontalAlignment="Center" FontFamily="Arial Black" FontSize="20"  />
+            <!--// uses as a spacer //-->
 
         </StackPanel>
 

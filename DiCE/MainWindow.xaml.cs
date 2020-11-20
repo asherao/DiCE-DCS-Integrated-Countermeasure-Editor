@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using LsonLib;//https://github.com/rstarkov/LsonLib
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,6 +22,35 @@ using Path = System.IO.Path;//not quite sure if this is correct
 
 /* Welcome to DiCE - DCS Integrated Countermeasure Editor
  * 
+ * Release Checklist:
+ * -Correct all typos
+ * -Clean up the spacing in the code a bit
+ * -Increase the version number in the main probram and the entry.lua files
+ * -add update notes
+ * -Run the build and make sure it works in DCS itself
+ * -Go to the DiCE\Release folder, copy the previous release, and paste over the luas and make sure to add the new stuff too
+ * -make sure to re-Build the project and put the new exe in the Release folder
+ * -Update the readme
+ * -delete the old files form thje readme exe
+ * -Drag all new files and readme to the release zip
+ * -Put the zip in the google drive
+ * -test the new version on a different device
+ * -upload new pics to imgur
+ * -on ED userfiles
+ *  -Edit the DiCE entry
+ *  -adjust title name (version number)
+ *  -edit descroption
+ *  -edit version notes
+ *  -download the file to make sure the correct one was uploaded
+ * -on ED forums
+ *  -take relevent screenshoort of new feature
+ *  -update first post
+ *  -make normal post
+ * -on discord
+ *  -@everyone about the new version
+ * -Yay!
+ * 
+ * 
  * Vision:
  * -Player Launches DCS
  * -Player confirms CMS editing via the DCS Special Options Menu
@@ -38,11 +68,18 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * ------------------------------------
  * 
  * TODO: 
- * -Write a "Release Checklist"
+ * Clean up comments
  * 
  * --------------------------------------
  * 
  * TODO: Later
+ * 
+ * -Make a backup system (requested once via discord by Animal)
+ *  -make the system via the exe
+ *  -have a "backup countermeasures" button and a "restore backup" button
+ *  -idk where to actually save the info yet
+ *  -i image i have to go line by line to save and then line by line to load
+ *  -maybe this may help: https://docs.microsoft.com/en-us/previous-versions/aa730869(v=vs.80)?redirectedfrom=MSDN
  * -Make logic for the export a10c and a10c2 so that the files are not exported twice for both aircraft
  * -try to scroll to end after init
  * -Make sure that the program never ever blocks DCS from writing to any file, ever(has never been blocked, yet...)
@@ -53,6 +90,7 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * -See if you can get DiCE.exe to launch in a way to at does not "take focus" from the DCS launch
  * -See if you can make logic that will check for changes before exporting the CMS file
  * -Make the log a little more readable. It kinda looks like things export twice.
+ * -revamp the old aircraft with the new lua system
  * 
  * 
  * Version Targets:
@@ -236,9 +274,10 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * v3
  * -DiCE AV-8B enabled 
  * 
+ * v4
+ * -DiCE M2000C enabled
  *
  * vFuture
- * -DiCE M2000C
  * -DiCE F-16C Harm Tables
  * 
  * 
@@ -271,6 +310,19 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * Special thanks to the Hoggit Discord for answering my questions and here, there, and everywhere.
  * Special thanks to all who voluntered to demo and test DiCE. Your bravery will never be forgotten.
  * 
+ * 
+ * 
+ * Adding new aircraft to this code instructions:
+ * add detection_AIRPLANE_DiCE
+ * add detection_AIRPLANE_vanilla
+ * add cmdsLua_AIRPLANE_fullPath
+ * add cmdsLua_AIRPLANE_FolderPath
+ * add cmdsLua_AIRPLANE_fullPath;
+ * add cmdsLua_AIRPLANE_FolderPath;
+ * 
+ * 
+ * Wishlist: 
+ * Have the hidden icons populate based on the detected installed modules. And have the DiCE Log say what modules are detected.
  * End of Comments------//
  */
 
@@ -303,11 +355,10 @@ namespace DiCE
 
         string cmdsLua_F16C_fullPath;
         string cmdsLua_F16C_FolderPath;
-        
+
         string cmdsLua_A10C_fullPath;
         string cmdsLua_A10C_FolderPath;
 
-        //the below are not yet implemented in DiCE
         string cmdsLua_A10C2_fullPath;//will be combined with the A-10C
         string cmdsLua_A10C2_FolderPath;//will be combined with the A-10C
 
@@ -316,7 +367,6 @@ namespace DiCE
 
         string cmdsLua_AV8B_fullPath;
         string cmdsLua_AV8B_FolderPath;
-        //the above are not yet implemented in DiCE
 
         bool isDCSrunning;
 
@@ -330,6 +380,7 @@ namespace DiCE
         string detection_A10C_DiCE = "DiCE A-10C";
         string detection_A10C2_DiCE = "DiCE A-10C";//this will be the same as the A-10C
         string detection_AV8B_DiCE = "DiCE AV-8B";
+        string detection_M2000C_DiCE = "DiCE M2000C";
 
         //these make sure that DiCE exports CMS profiles that the user actually has
         string detection_F18C_vanilla = "[\"F/A-18C\"]";
@@ -337,10 +388,11 @@ namespace DiCE
         string detection_A10C_vanilla = "[\"A-10C\"]";
         string detection_A10C2_vanilla = "[\"A-10C_2\"]";
         string detection_AV8B_vanilla = "[\"AV8BNA\"]";
+        string detection_M2000C_vanilla = "[\"M-2000C\"]";
 
         int mainPageButtonLogo = 0;
 
-        int secondsToCheckIfDcsIsAlive = 2;//DiCE will check if DCS.exe is running at this rate
+        int secondsToCheckIfDcsIsAlive = 1;//DiCE will check if DCS.exe is running at this rate. 2 was fine
 
         string optionsLuaText;
 
@@ -383,7 +435,7 @@ namespace DiCE
             //-----------------------------------------------------------------------------------------
 
             //https://stackoverflow.com/questions/5410430/wpf-timer-like-c-sharp-timer
-           
+
             dispatcherTimer.Tick += dispatcherTimer_Tick;
             dispatcherTimer.Interval = new TimeSpan(0, 0, secondsToCheckIfDcsIsAlive);//set the time for the DCS process check here (seconds, minutes, hours)
 
@@ -445,9 +497,9 @@ namespace DiCE
             userOptionsLua_Full_pathWithExtention = userOptionsLua_Full_pathWithExtention + "Config\\options.lua";
             //richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "DiCE.exe path : '" + appPath + "'");
             //richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "Predicted options.lua path : '" + userOptionsLua_Full_pathWithExtention + "'");
-            
-            
-            
+
+
+
             if (File.Exists(userOptionsLua_Full_pathWithExtention))
             {
 
@@ -518,6 +570,29 @@ namespace DiCE
                 cmdsLua_AV8B_fullPath = dcs_topFolderPath + @"\Mods\aircraft\AV8BNA\Cockpit\Scripts\EWS\EW_Dispensers_init.lua";
                 cmdsLua_AV8B_FolderPath = dcs_topFolderPath + @"\Mods\aircraft\AV8BNA\Cockpit\Scripts\EWS\";
 
+                //read the lua file so that we can do some init stuff
+                var optionsLuaText = LsonVars.Parse(File.ReadAllText(userOptionsLua_Full_pathWithExtention));
+
+                
+                bool closeDiceAfterLaunch;//init the variable
+                //get the bool from the options.lua. it is a checkbox so it will already provide true or false
+                closeDiceAfterLaunch = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["closeDiceAfterLaunch"].GetBool();
+                //if it is true, close DiCE
+                if (closeDiceAfterLaunch)
+                {
+                    System.Windows.Application.Current.Shutdown();
+                }
+
+                //lua version
+
+                //this just an example of the format for getting values.
+                //if the value is not present, the program crashes. TODO: test this crash thing
+
+                //string howManyBirds = optionsLuaText["options"]["difficulty"]["birds"].GetString();
+
+                //richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + howManyBirds + " birds detected.");
+
+                //richTextBox_log.ScrollToEnd();
 
                 //MessageBox.Show(optionsLua_topFolderPath);
 
@@ -541,14 +616,17 @@ namespace DiCE
             {
                 WindowState = WindowState.Minimized;//minimise the window. maybe try to make this a launch option?
             }
-            
+
+            //load this file (the options.lua) into a lua parser
+
+
         }
 
         private void listenToUsersOptionsFile()
         {//this makes the timer
             //https://www.c-sharpcorner.com/UploadFile/ad8d1c/watch-a-folder-for-updation-in-wpf-C-Sharp/
             fileSystemWatcher1 = new FileSystemWatcher(optionsLua_topFolderPath, "options.lua");
-            richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "Watching for changes in: " + optionsLua_topFolderPath  + "\\options.lua");
+            richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "Watching for changes in: " + optionsLua_topFolderPath + "\\options.lua");
             richTextBox_log.ScrollToEnd();
 
             fileSystemWatcher1.EnableRaisingEvents = true;
@@ -580,51 +658,57 @@ namespace DiCE
                 //these are the names of the identifiers in the options.lua file
 
                 Thread.Sleep(500);//is hopefully prevents the read of the below file during a DCS write. has not failed at 1000, yet.
-                                   //2000 kinda takes too long, personally
-                                   //500 seems to be working fine with the multi-change check
-                                   //https://stackoverflow.com/questions/9732709/the-calling-thread-cannot-access-this-object-because-a-different-thread-owns-it
-                                   //where the invoke thing comes from
-               
+                                  //2000 kinda takes too long, personally
+                                  //500 seems to be working fine with the multi-change check
+                                  //https://stackoverflow.com/questions/9732709/the-calling-thread-cannot-access-this-object-because-a-different-thread-owns-it
+                                  //where the invoke thing comes from
+
                 this.Dispatcher.Invoke(() =>
                 {
                     richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "A change in Options.lua was detected.");
                     try
                     {
                         optionsLuaText = System.IO.File.ReadAllText(userOptionsLua_Full_pathWithExtention);
-                    //the blow '&&' statements should make sure that the player has the module installed before 
-                    //the utility tries to export it. Just another check to prevent wasted utility effort
-                    if (optionsLuaText.Contains(detection_F18C_DiCE) && optionsLuaText.Contains(detection_F18C_vanilla))
+                        //the blow '&&' statements should make sure that the player has the module installed before 
+                        //the utility tries to export it. Just another check to prevent wasted utility effort
+                        if (optionsLuaText.Contains(detection_F18C_DiCE) && optionsLuaText.Contains(detection_F18C_vanilla))
                         {
-                            richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "F-18C CMS file located.");
-                            richTextBox_log.ScrollToEnd();
+                            //richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "F-18C CMS file located.");
+                            //richTextBox_log.ScrollToEnd();
                             readAndExportF18Data();
                         }
 
-                    if (optionsLuaText.Contains(detection_F16C_DiCE) && optionsLuaText.Contains(detection_F16C_vanilla))
+                        if (optionsLuaText.Contains(detection_F16C_DiCE) && optionsLuaText.Contains(detection_F16C_vanilla))
                         {
-                            richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "F-16C CMS file located.");
-                            richTextBox_log.ScrollToEnd();
+                            //richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "F-16C CMS file located.");
+                            //richTextBox_log.ScrollToEnd();
                             readAndExportF16Data();
                         }
 
-                    if (optionsLuaText.Contains(detection_A10C_DiCE) && optionsLuaText.Contains(detection_A10C_vanilla))
+                        if (optionsLuaText.Contains(detection_A10C_DiCE) && optionsLuaText.Contains(detection_A10C_vanilla))
                         {
-                            richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "A-10C CMS file located.");
-                            richTextBox_log.ScrollToEnd();
+                            //richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "A-10C CMS file located.");
+                            //richTextBox_log.ScrollToEnd();
                             readAndExportA10CData();
                         }
 
-                    if (optionsLuaText.Contains(detection_A10C2_DiCE) && optionsLuaText.Contains(detection_A10C2_vanilla))
+                        if (optionsLuaText.Contains(detection_A10C2_DiCE) && optionsLuaText.Contains(detection_A10C2_vanilla))
                         {
-                            richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "A-10C2 CMS file located.");
-                            richTextBox_log.ScrollToEnd();
+                           // richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "A-10C2 CMS file located.");
+                            //richTextBox_log.ScrollToEnd();
                             readAndExportA10CData();
                         }
-                    if (optionsLuaText.Contains(detection_AV8B_DiCE) && optionsLuaText.Contains(detection_AV8B_vanilla))
+                        if (optionsLuaText.Contains(detection_AV8B_DiCE) && optionsLuaText.Contains(detection_AV8B_vanilla))
                         {
-                            richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "AV-8B CMS file located.");
-                            richTextBox_log.ScrollToEnd();
+                            //richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "AV-8B CMS file located.");
+                            //richTextBox_log.ScrollToEnd();
                             readAndExportAV8BData();
+                        }
+                        if (optionsLuaText.Contains(detection_M2000C_DiCE) && optionsLuaText.Contains(detection_M2000C_vanilla))
+                        {
+                            //richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "M2000C CMS file located.");
+                            //richTextBox_log.ScrollToEnd();
+                            readAndExportM2000CData();
                         }
 
                     }
@@ -634,9 +718,9 @@ namespace DiCE
                         richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + f.Message);
                         richTextBox_log.ScrollToEnd();
                     }
-                //MessageBox.Show(optionsLuaText);
+                    //MessageBox.Show(optionsLuaText);
 
-            });
+                });
             }
         }
 
@@ -649,7 +733,7 @@ namespace DiCE
             //System.Media.SoundPlayer player = new System.Media.SoundPlayer(@"Assets\Play02.oog");
             //SystemSounds.Beep.Play();
             //SystemSounds.Asterisk.Play();
-           //SystemSounds.Exclamation.Play();
+            //SystemSounds.Exclamation.Play();
             //the three above are all the same
             //SystemSounds.Hand.Play();//three tone tatutunnn
             //SystemSounds.Question.Play();//uh, no sound....
@@ -657,7 +741,7 @@ namespace DiCE
             //player.Play();
         }
 
-        
+
 
         private void dispatcherTimer_Tick(object sender, EventArgs e)//fires every 5? seconds
         {//this is not yet enabled
@@ -721,7 +805,7 @@ namespace DiCE
             richTextBox_log.ScrollToEnd();
         }
 
-        
+
         private void button_selectDcsExe_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog1 = new OpenFileDialog();
@@ -1158,7 +1242,7 @@ namespace DiCE
                 "",
                 "",
                 "need_to_be_closed = true -- lua_state  will be closed in post_initialize()",
-                "--Exported via DiCE by Bailey on " + System.DateTime.Now};
+                "--Exported via DiCE by Bailey " + System.DateTime.Now};
 
             System.IO.Directory.CreateDirectory(cmdsLua_F18C_FolderPath);
 
@@ -1675,7 +1759,7 @@ namespace DiCE
                 "}",
                 "",
                 "need_to_be_closed = true -- lua_state  will be closed in post_initialize()",
-                "--Exported via DiCE by Bailey on " + System.DateTime.Now};
+                "--Exported via DiCE by Bailey " + System.DateTime.Now};
 
             System.IO.Directory.CreateDirectory(cmdsLua_F16C_FolderPath);
 
@@ -2048,7 +2132,7 @@ namespace DiCE
                 "}",
                 "",
                 "need_to_be_closed = true -- lua_state  will be closed in post_initialize()",
-                "--Exported via DiCE by Bailey on " + System.DateTime.Now};
+                "--Exported via DiCE by Bailey " + System.DateTime.Now};
 
             //if DiCE detects that the A-10C is installed
             if (optionsLuaText.Contains(detection_A10C_DiCE) && optionsLuaText.Contains(detection_A10C_vanilla))
@@ -2095,7 +2179,7 @@ namespace DiCE
             }
         }
 
-        private void readAndExportAV8BData()//TODO: code this
+        private void readAndExportAV8BData()
         {
             //All Expendables
             string tempLength = ("[\"AV8BAllExpendablesChaffBurstQuantity\"] =");
@@ -2200,7 +2284,7 @@ namespace DiCE
                 "need_to_be_closed = true",
                 "",
 
-                "--Exported via DiCE by Bailey on " + System.DateTime.Now};
+                "--Exported via DiCE by Bailey " + System.DateTime.Now};
             System.IO.Directory.CreateDirectory(cmdsLua_AV8B_FolderPath);
 
             try
@@ -2219,6 +2303,265 @@ namespace DiCE
                 richTextBox_log.ScrollToEnd();
             }
         }
-        
+
+        private void readAndExportM2000CData()//TODO: code this
+        {
+            //
+            var optionsLuaText = LsonVars.Parse(File.ReadAllText(userOptionsLua_Full_pathWithExtention));
+            //var M2000CManual01Chaff = optionsLuaText["options"]["plugins"]["DiCE M2000C"].GetStringLenient();//you dont even need this!!!!
+            Double M2000CManual01Chaff = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual01Chaff"].GetDoubleLenient();
+            Double M2000CManual01Flare = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual01Flare"].GetDoubleLenient();
+            Double M2000CManual01Cycle = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual01Cycle"].GetDoubleLenient();
+            Double M2000CManual01CycleInterval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual01CycleInterval"].GetDoubleLenient();
+            Double M2000CManual01Interval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual01Interval"].GetDoubleLenient();
+            Double M2000CManual02Chaff = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual02Chaff"].GetDoubleLenient();
+            Double M2000CManual02Cycle = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual02Cycle"].GetDoubleLenient();
+            Double M2000CManual02CycleInterval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual02CycleInterval"].GetDoubleLenient();
+            Double M2000CManual02Flare = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual02Flare"].GetDoubleLenient();
+            Double M2000CManual02Interval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual02Interval"].GetDoubleLenient();
+            Double M2000CManual03Chaff = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual03Chaff"].GetDoubleLenient();
+            Double M2000CManual03Cycle = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual03Cycle"].GetDoubleLenient();
+            Double M2000CManual03CycleInterval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual03CycleInterval"].GetDoubleLenient();
+            Double M2000CManual03Flare = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual03Flare"].GetDoubleLenient();
+            Double M2000CManual03Interval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual03Interval"].GetDoubleLenient();
+            Double M2000CManual04Chaff = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual04Chaff"].GetDoubleLenient();
+            Double M2000CManual04Cycle = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual04Cycle"].GetDoubleLenient();
+            Double M2000CManual04CycleInterval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual04CycleInterval"].GetDoubleLenient();
+            Double M2000CManual04Flare = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual04Flare"].GetDoubleLenient();
+            Double M2000CManual04Interval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual04Interval"].GetDoubleLenient();
+            Double M2000CManual05Chaff = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual05Chaff"].GetDoubleLenient();
+            Double M2000CManual05Cycle = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual05Cycle"].GetDoubleLenient();
+            Double M2000CManual05CycleInterval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual05CycleInterval"].GetDoubleLenient();
+            Double M2000CManual05Flare = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual05Flare"].GetDoubleLenient();
+            Double M2000CManual05Interval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual05Interval"].GetDoubleLenient();
+            Double M2000CManual06Chaff = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual06Chaff"].GetDoubleLenient();
+            Double M2000CManual06Cycle = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual06Cycle"].GetDoubleLenient();
+            Double M2000CManual06CycleInterval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual06CycleInterval"].GetDoubleLenient();
+            Double M2000CManual06Flare = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual06Flare"].GetDoubleLenient();
+            Double M2000CManual06Interval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual06Interval"].GetDoubleLenient();
+            Double M2000CManual07Chaff = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual07Chaff"].GetDoubleLenient();
+            Double M2000CManual07Cycle = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual07Cycle"].GetDoubleLenient();
+            Double M2000CManual07CycleInterval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual07CycleInterval"].GetDoubleLenient();
+            Double M2000CManual07Flare = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual07Flare"].GetDoubleLenient();
+            Double M2000CManual07Interval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual07Interval"].GetDoubleLenient();
+            Double M2000CManual08Chaff = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual08Chaff"].GetDoubleLenient();
+            Double M2000CManual08Cycle = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual08Cycle"].GetDoubleLenient();
+            Double M2000CManual08CycleInterval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual08CycleInterval"].GetDoubleLenient();
+            Double M2000CManual08Flare = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual08Flare"].GetDoubleLenient();
+            Double M2000CManual08Interval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual08Interval"].GetDoubleLenient();
+            Double M2000CManual09Chaff = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual09Chaff"].GetDoubleLenient();
+            Double M2000CManual09Cycle = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual09Cycle"].GetDoubleLenient();
+            Double M2000CManual09CycleInterval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual09CycleInterval"].GetDoubleLenient();
+            Double M2000CManual09Flare = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual09Flare"].GetDoubleLenient();
+            Double M2000CManual09Interval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual09Interval"].GetDoubleLenient();
+            Double M2000CManual10Chaff = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual10Chaff"].GetDoubleLenient();
+            Double M2000CManual10Cycle = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual10Cycle"].GetDoubleLenient();
+            Double M2000CManual10CycleInterval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual10CycleInterval"].GetDoubleLenient();
+            Double M2000CManual10Flare = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual10Flare"].GetDoubleLenient();
+            Double M2000CManual10Interval = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual10Interval"].GetDoubleLenient();
+
+
+            string[] luaExportString = {
+                "local gettext = require(\"i_18n\")",
+                "_ = gettext.translate",
+                "",
+                "programs = {}",
+                "",
+                "-- User Modifiable program",
+                "programs[1] = {}",
+                "programs[1][\"chaff\"]  = "+ M2000CManual01Chaff,
+                "programs[1][\"flare\"]  = "+ M2000CManual01Flare,
+                "programs[1][\"intv\"]   = "+ M2000CManual01Interval*100,
+                "programs[1][\"cycle\"]  = "+ M2000CManual01Cycle,
+                "programs[1][\"c_intv\"] = "+ M2000CManual01CycleInterval*100,
+                "programs[1][\"panic\"]  = 0",
+                "",
+                "programs[2] = {}",
+                "programs[2][\"chaff\"]  = "+ M2000CManual02Chaff,
+                "programs[2][\"flare\"]  = "+ M2000CManual02Flare,
+                "programs[2][\"intv\"]   = "+ M2000CManual02Interval*100,
+                "programs[2][\"cycle\"]  = "+ M2000CManual02Cycle,
+                "programs[2][\"c_intv\"] = "+ M2000CManual02CycleInterval*100,
+                "programs[2][\"panic\"]  = 0",
+                "",
+                "programs[3] = {}",
+                "programs[3][\"chaff\"]  = "+ M2000CManual03Chaff,
+                "programs[3][\"flare\"]  = "+ M2000CManual03Flare,
+                "programs[3][\"intv\"]   = "+ M2000CManual03Interval*100,
+                "programs[3][\"cycle\"]  = "+ M2000CManual03Cycle,
+                "programs[3][\"c_intv\"] = "+ M2000CManual03CycleInterval*100,
+                "programs[3][\"panic\"]  = 0",
+                "",
+                "programs[4] = {}",
+                "programs[4][\"chaff\"]  = "+ M2000CManual04Chaff,
+                "programs[4][\"flare\"]  = "+ M2000CManual04Flare,
+                "programs[4][\"intv\"]   = "+ M2000CManual04Interval*100,
+                "programs[4][\"cycle\"]  = "+ M2000CManual04Cycle,
+                "programs[4][\"c_intv\"] = "+ M2000CManual04CycleInterval*100,
+                "programs[4][\"panic\"]  = 0",
+                "",
+                "programs[5] = {}",
+                "programs[5][\"chaff\"]  = "+ M2000CManual05Chaff,
+                "programs[5][\"flare\"]  = "+ M2000CManual05Flare,
+                "programs[5][\"intv\"]   = "+ M2000CManual05Interval*100,
+                "programs[5][\"cycle\"]  = "+ M2000CManual05Cycle,
+                "programs[5][\"c_intv\"] = "+ M2000CManual05CycleInterval*100,
+                "programs[5][\"panic\"]  = 0",
+                "",
+                "programs[6] = {}",
+                "programs[6][\"chaff\"]  = "+ M2000CManual06Chaff,
+                "programs[6][\"flare\"]  = "+ M2000CManual06Flare,
+                "programs[6][\"intv\"]   = "+ M2000CManual06Interval*100,
+                "programs[6][\"cycle\"]  = "+ M2000CManual06Cycle,
+                "programs[6][\"c_intv\"] = "+ M2000CManual06CycleInterval*100,
+                "programs[6][\"panic\"]  = 0",
+                "",
+                "programs[7] = {}",
+                "programs[7][\"chaff\"]  = "+ M2000CManual07Chaff,
+                "programs[7][\"flare\"]  = "+ M2000CManual07Flare,
+                "programs[7][\"intv\"]   = "+ M2000CManual07Interval*100,
+                "programs[7][\"cycle\"]  = "+ M2000CManual07Cycle,
+                "programs[7][\"c_intv\"] = "+ M2000CManual07CycleInterval*100,
+                "programs[7][\"panic\"]  = 0",
+                "",
+                "programs[8] = {}",
+                "programs[8][\"chaff\"]  = "+ M2000CManual08Chaff,
+                "programs[8][\"flare\"]  = "+ M2000CManual08Flare,
+                "programs[8][\"intv\"]   = "+ M2000CManual08Interval*100,
+                "programs[8][\"cycle\"]  = "+ M2000CManual08Cycle,
+                "programs[8][\"c_intv\"] = "+ M2000CManual08CycleInterval*100,
+                "programs[8][\"panic\"]  = 0",
+                "",
+                "programs[9] = {}",
+                "programs[9][\"chaff\"]  = "+ M2000CManual09Chaff,
+                "programs[9][\"flare\"]  = "+ M2000CManual09Flare,
+                "programs[9][\"intv\"]   = "+ M2000CManual09Interval*100,
+                "programs[9][\"cycle\"]  = "+ M2000CManual09Cycle,
+                "programs[9][\"c_intv\"] = "+ M2000CManual09CycleInterval*100,
+                "programs[9][\"panic\"]  = 0",
+                "",
+                "programs[10] = {}",
+                "programs[10][\"chaff\"]  = "+ M2000CManual10Chaff,
+                "programs[10][\"flare\"]  = "+ M2000CManual10Flare,
+                "programs[10][\"intv\"]   = "+ M2000CManual10Interval*100,
+                "programs[10][\"cycle\"]  = "+ M2000CManual10Cycle,
+                "programs[10][\"c_intv\"] = "+ M2000CManual10CycleInterval*100,
+                "programs[10][\"panic\"]  = 0",
+                "",
+                "need_to_be_closed = true",
+                "--Exported via DiCE by Bailey " + System.DateTime.Now};
+
+
+            //start of default settings for some future purpose. make sure to double check the numbers with a fresh file
+            string[] luaExportStringDefaultSettings = {
+                "local gettext = require(\"i_18n\")",
+                "_ = gettext.translate",
+                "",
+                "programs = {}",
+                "",
+                "-- User Modifiable program",
+                "programs[1] = {}",
+                "programs[1][\"chaff\"]  = 6",
+                "programs[1][\"flare\"]  = 0",
+                "programs[1][\"intv\"]   = 50",
+                "programs[1][\"cycle\"]  = 1",
+                "programs[1][\"c_intv\"] = 0",
+                "programs[1][\"panic\"]  = 0",
+                "",
+                "programs[2] = {}",
+                "programs[2][\"chaff\"]  = 6",
+                "programs[2][\"flare\"]  = 0",
+                "programs[2][\"intv\"]   = 50",
+                "programs[2][\"cycle\"]  = 2",
+                "programs[2][\"c_intv\"] = 200",
+                "programs[2][\"panic\"]  = 0",
+                "",
+                "programs[3] = {}",
+                "programs[3][\"chaff\"]  = 6",
+                "programs[3][\"flare\"]  = 0",
+                "programs[3][\"intv\"]   = 50",
+                "programs[3][\"cycle\"]  = 3",
+                "programs[3][\"c_intv\"] = 200",
+                "programs[3][\"panic\"]  = 0",
+                "",
+                "programs[4] = {}",
+                "programs[4][\"chaff\"]  = 0",
+                "programs[4][\"flare\"]  = 2",
+                "programs[4][\"intv\"]   = 0",
+                "programs[4][\"cycle\"]  = 1",
+                "programs[4][\"c_intv\"] = 0",
+                "programs[4][\"panic\"]  = 0",
+                "",
+                "programs[5] = {}",
+                "programs[5][\"chaff\"]  = 1",
+                "programs[5][\"flare\"]  = 1",
+                "programs[5][\"intv\"]   = 0",
+                "programs[5][\"cycle\"]  = 1",
+                "programs[5][\"c_intv\"] = 0",
+                "programs[5][\"panic\"]  = 0",
+                "",
+                "programs[6] = {}",
+                "programs[6][\"chaff\"]  = 12",
+                "programs[6][\"flare\"]  = 0",
+                "programs[6][\"intv\"]   = 75",
+                "programs[6][\"cycle\"]  = 1",
+                "programs[6][\"c_intv\"] = 0",
+                "programs[6][\"panic\"]  = 0",
+                "",
+                "programs[7] = {}",
+                "programs[7][\"chaff\"]  = 20",
+                "programs[7][\"flare\"]  = 0",
+                "programs[7][\"intv\"]   = 25",
+                "programs[7][\"cycle\"]  = 1",
+                "programs[7][\"c_intv\"] = 0",
+                "programs[7][\"panic\"]  = 0",
+                "",
+                "programs[8] = {}",
+                "programs[8][\"chaff\"]  = 0",
+                "programs[8][\"flare\"]  = 6",
+                "programs[8][\"intv\"]   = 25",
+                "programs[8][\"cycle\"]  = 1",
+                "programs[8][\"c_intv\"] = 0",
+                "programs[8][\"panic\"]  = 0",
+                "",
+                "programs[9] = {}",
+                "programs[9][\"chaff\"]  = 20",
+                "programs[9][\"flare\"]  = 6",
+                "programs[9][\"intv\"]   = 25",
+                "programs[9][\"cycle\"]  = 1",
+                "programs[9][\"c_intv\"] = 0",
+                "programs[9][\"panic\"]  = 0",
+                "",
+                "programs[10] = {}",
+                "programs[10][\"chaff\"]  = 0",
+                "programs[10][\"flare\"]  = 32",
+                "programs[10][\"intv\"]   = 25",
+                "programs[10][\"cycle\"]  = 1",
+                "programs[10][\"c_intv\"] = 0",
+                "programs[10][\"panic\"]  = 0",
+                "",
+                "need_to_be_closed = true",
+                "--Exported via DiCE by Bailey " + System.DateTime.Now};
+            //end of the default settings
+
+            System.IO.Directory.CreateDirectory(cmdsLua_M2000C_FolderPath);
+
+            try
+            {
+                System.IO.File.WriteAllLines(cmdsLua_M2000C_fullPath, luaExportString);
+                //https://stackoverflow.com/questions/5920882/file-move-does-not-work-file-already-exists
+                //playCompleteSound();
+
+                richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "M2000C CMS file exported.");
+                richTextBox_log.ScrollToEnd();
+            }
+            catch (IOException h)
+            {
+                richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "DiCE could not write the M2000C CMS lua.");
+                richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + h.Message);
+                richTextBox_log.ScrollToEnd();
+            }
+        }
+
     }
 }
