@@ -74,6 +74,8 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * 
  * TODO: Later
  * 
+ * -if the program is launched and does not detect dcs, use the CMS Editor version
+ * -have the users info saved via .json (use DCS-weatherman as an example
  * -Make a backup system (requested once via discord by Animal)
  *  -make the system via the exe
  *  -have a "backup countermeasures" button and a "restore backup" button
@@ -97,7 +99,7 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * -target v1 as f18 and f16 complete (done)
  * -target v2 as a10 and a102 complete (done)
  * -target v3 as av8b complete (done)
- * -target v4 as m2000c complete
+ * -target v4 as m2000c complete (done)
  * -tarvet v5 as f5 complete
  * -target v6 as f16harms as complete
  * 
@@ -403,7 +405,7 @@ namespace DiCE
         {
 
             //-----------------------------------------------------------------------------------------
-            //-----Is DCS Already Running Check
+            //-----Is DCS DiCE Already Running Check
             //-----------------------------------------------------------------------------------------
 
             //simple check to make sure that an instance of dice is not launched while an instance is already running
@@ -415,7 +417,7 @@ namespace DiCE
 
             if (processes.Length > 1)
             {
-                MessageBox.Show(procName + " already running.");
+                //MessageBox.Show(procName + " already running.");
                 System.Windows.Application.Current.Shutdown();
                 return;
             }
@@ -743,8 +745,8 @@ namespace DiCE
 
 
 
-        private void dispatcherTimer_Tick(object sender, EventArgs e)//fires every 5? seconds
-        {//this is not yet enabled
+        private void dispatcherTimer_Tick(object sender, EventArgs e)//fires every 1 seconds
+        {
             //https://stackoverflow.com/questions/262280/how-can-i-know-if-a-process-is-running
             //if DCS is not running, this program will close
             Process[] pname = Process.GetProcessesByName("DCS");
