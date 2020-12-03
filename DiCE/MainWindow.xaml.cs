@@ -69,6 +69,7 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * 
  * TODO: 
  * Clean up comments
+ * Could this be changed so you have DiCE write to the files at startup of DCS/DiCE? It would help. (requested by Bear21)
  * 
  * --------------------------------------
  * 
@@ -91,7 +92,6 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * -Create the options for DiCE.exe to launch with or without DCS (like SRS's special option)
  * -See if you can get DiCE.exe to launch in a way to at does not "take focus" from the DCS launch
  * -See if you can make logic that will check for changes before exporting the CMS file
- * -Make the log a little more readable. It kinda looks like things export twice.
  * -revamp the old aircraft with the new lua system
  * 
  * 
@@ -597,9 +597,12 @@ namespace DiCE
                 //richTextBox_log.ScrollToEnd();
 
                 //MessageBox.Show(optionsLua_topFolderPath);
-
+                
                 listenToUsersOptionsFile();
                 richTextBox_log.ScrollToEnd();
+                Thread.Sleep(1100);//this is to make sure that the next line does not get cauth in the programs own rapid options.lua change check
+                makeTheCmsChanges();//updates the values when launched
+
             }
             else
             {
@@ -629,6 +632,7 @@ namespace DiCE
             //https://www.c-sharpcorner.com/UploadFile/ad8d1c/watch-a-folder-for-updation-in-wpf-C-Sharp/
             fileSystemWatcher1 = new FileSystemWatcher(optionsLua_topFolderPath, "options.lua");
             richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "Watching for changes in: " + optionsLua_topFolderPath + "\\options.lua");
+            
             richTextBox_log.ScrollToEnd();
 
             fileSystemWatcher1.EnableRaisingEvents = true;
@@ -651,6 +655,13 @@ namespace DiCE
         }
 
         public void fs_Changed(object fschanged, FileSystemEventArgs changeEvent)
+        {
+            makeTheCmsChanges();
+            
+        }
+
+
+        public void makeTheCmsChanges()
         {
             if (DateTime.Now.Subtract(fsLastRaised).TotalMilliseconds > 1000)//this hopefully prevents the options.lua to be read multiple times within 1 second
             {
@@ -696,7 +707,7 @@ namespace DiCE
 
                         if (optionsLuaText.Contains(detection_A10C2_DiCE) && optionsLuaText.Contains(detection_A10C2_vanilla))
                         {
-                           // richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "A-10C2 CMS file located.");
+                            // richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "A-10C2 CMS file located.");
                             //richTextBox_log.ScrollToEnd();
                             readAndExportA10CData();
                         }
