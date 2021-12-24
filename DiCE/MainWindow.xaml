@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DiCE"
         mc:Ignorable="d"
-        Title="DiCE - DCS Integrated Countermeasure Editor v3 by Bailey" Height="151" Width="570" MinHeight="200" MinWidth="570" 
+        Title="DiCE - DCS Integrated Countermeasure Editor v4.3 by Bailey" Height="151" Width="570" MinHeight="200" MinWidth="570" 
         WindowStyle="None" Background="Transparent" AllowsTransparency="False" Name="myWindow">
     <!--// change 'allowsTransparance to true to get true borderless, no resize //-->
 
@@ -36,7 +36,7 @@
 
         <!--// Title Bar //-->
 
-        <TextBlock Grid.Row="1" Grid.Column="1"  Text="DiCE - DCS Integrated Countermeasure Editor v4.2 by Bailey" 
+        <TextBlock Grid.Row="1" Grid.Column="1"  Text="DiCE - DCS Integrated Countermeasure Editor v4.3 by Bailey" 
                    VerticalAlignment="Top" Width="Auto" Background="#2d3e50" Foreground="#bccece" FontSize="18" 
                    FontWeight="Bold" FontStyle="Italic" Grid.ColumnSpan="5" Height="24" Grid.RowSpan="1" PreviewMouseLeftButtonDown="titleBar_leftButtonDown">
         </TextBlock>

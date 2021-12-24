@@ -69,7 +69,7 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * 
  * TODO: 
  * Clean up comments
- * Could this be changed so you have DiCE write to the files at startup of DCS/DiCE? It would help. (requested by Bear21)
+ * Make AH64 art, resources, and menu GUIs
  * 
  * --------------------------------------
  * 
@@ -100,7 +100,7 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * -target v2 as a10 and a102 complete (done)
  * -target v3 as av8b complete (done)
  * -target v4 as m2000c complete (done)
- * -tarvet v5 as f5 complete
+ * -tarvet v5 as AH-64D complete
  * -target v6 as f16harms as complete
  * 
  * 
@@ -278,9 +278,24 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * 
  * v4
  * -DiCE M2000C enabled
+ * 
+ * v4.1
+ * -Updated readme (read readme if you have DCS installed in Program Files
+ * -Took away “DiCE is already running” popup
+ * 
+ * v4.1.1
+ * -Fixed DiCE errors in dcs.log file
+ *
+ * v4.2
+ * -DiCE now makes CMS changes on startup too (thanks Bear21)
+ *
+ * v4.3
+ * -Updated F-16C for DCS v2.7.7.15038
  *
  * vFuture
+ * -DiCE AH-64D
  * -DiCE F-16C Harm Tables
+ * 
  * 
  * 
  * Bugs:
@@ -313,14 +328,13 @@ using Path = System.IO.Path;//not quite sure if this is correct
  * Special thanks to all who voluntered to demo and test DiCE. Your bravery will never be forgotten.
  * 
  * 
- * 
  * Adding new aircraft to this code instructions:
  * add detection_AIRPLANE_DiCE
  * add detection_AIRPLANE_vanilla
  * add cmdsLua_AIRPLANE_fullPath
  * add cmdsLua_AIRPLANE_FolderPath
- * add cmdsLua_AIRPLANE_fullPath;
- * add cmdsLua_AIRPLANE_FolderPath;
+ * parse the the options lua
+ * build the module CMDS file
  * 
  * 
  * Wishlist: 
@@ -370,6 +384,9 @@ namespace DiCE
         string cmdsLua_AV8B_fullPath;
         string cmdsLua_AV8B_FolderPath;
 
+        string cmdsLua_AH64D_fullPath;
+        string cmdsLua_AH64D_FolderPath;
+
         bool isDCSrunning;
 
         FileSystemWatcher fileSystemWatcher1;
@@ -383,6 +400,7 @@ namespace DiCE
         string detection_A10C2_DiCE = "DiCE A-10C";//this will be the same as the A-10C
         string detection_AV8B_DiCE = "DiCE AV-8B";
         string detection_M2000C_DiCE = "DiCE M2000C";
+        string detection_AH64D_DiCE = "DiCE AH-64D";
 
         //these make sure that DiCE exports CMS profiles that the user actually has
         string detection_F18C_vanilla = "[\"F/A-18C\"]";
@@ -391,6 +409,7 @@ namespace DiCE
         string detection_A10C2_vanilla = "[\"A-10C_2\"]";
         string detection_AV8B_vanilla = "[\"AV8BNA\"]";
         string detection_M2000C_vanilla = "[\"M-2000C\"]";
+        string detection_AH64D_vanilla = "[\"AH-64D\"]";//TODO: Verify this is the correct module name
 
         int mainPageButtonLogo = 0;
 
@@ -572,6 +591,9 @@ namespace DiCE
                 cmdsLua_AV8B_fullPath = dcs_topFolderPath + @"\Mods\aircraft\AV8BNA\Cockpit\Scripts\EWS\EW_Dispensers_init.lua";
                 cmdsLua_AV8B_FolderPath = dcs_topFolderPath + @"\Mods\aircraft\AV8BNA\Cockpit\Scripts\EWS\";
 
+                cmdsLua_AV8B_fullPath = dcs_topFolderPath + @"\Mods\aircraft\AH-64D\Cockpit\Scripts\EWS\EW_Dispensers_init.lua";//TODO: adjust this to the module
+                cmdsLua_AV8B_FolderPath = dcs_topFolderPath + @"\Mods\aircraft\AH-64D\Cockpit\Scripts\EWS\";
+
                 //read the lua file so that we can do some init stuff
                 var optionsLuaText = LsonVars.Parse(File.ReadAllText(userOptionsLua_Full_pathWithExtention));
 
@@ -723,6 +745,12 @@ namespace DiCE
                             //richTextBox_log.ScrollToEnd();
                             readAndExportM2000CData();
                         }
+                        if (optionsLuaText.Contains(detection_AH64D_DiCE) && optionsLuaText.Contains(detection_AH64D_vanilla))
+                        {
+                            //richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "AG-64D CMS file located.");
+                            //richTextBox_log.ScrollToEnd();
+                            //readAndExportAH64DData();TODO: Enable after module release
+                        }
 
                     }
                     catch (IOException f)
@@ -736,6 +764,7 @@ namespace DiCE
                 });
             }
         }
+
 
 
         private void playCompleteSound()
@@ -1254,8 +1283,8 @@ namespace DiCE
                 "programs[ProgramNames.AUTO_3][\"cycle\"] = " + F18C_AutoIrSamCycle_string,
                 "",
                 "",
-                "need_to_be_closed = true -- lua_state  will be closed in post_initialize()",
-                "--Exported via DiCE by Bailey " + System.DateTime.Now};
+                "need_to_be_closed = true -- lua_state  will be closed in post_initialize()" };
+                //"--Exported via DiCE by Bailey " + System.DateTime.Now};
 
             System.IO.Directory.CreateDirectory(cmdsLua_F18C_FolderPath);
 
@@ -1277,320 +1306,280 @@ namespace DiCE
         }
 
 
+        //TODO: Update this because DCS update 2.7.9.17830 on DEC 23rd added a BYPASS section
+        //Apparently the CMDS luas fail on trying to parse them because they are not parseable bc they are not fully the correct format
+        //if it was parseablee, the data transfer would look something like this
+        //cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_1]"]["chaff"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1ChaffBurstQty"].GetDoubleLenient();
+
         private void readAndExportF16Data()//similar to 'readAndExportF18Data()'
         {
-            //this is where you read the data from the options.lua and put them into variables
+           
+            var optionsLuaText = LsonVars.Parse(File.ReadAllText(userOptionsLua_Full_pathWithExtention));//Lson the options lua
 
-            int F16CManual1ChaffBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual1ChaffBurstQty\"] =") + 30;
-            int F16CManual1ChaffBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual1ChaffBurstQty_indexStart);
-            string F16CManual1ChaffBurstQty_string = optionsLuaText.Substring(F16CManual1ChaffBurstQty_indexStart, F16CManual1ChaffBurstQty_indexEnd - F16CManual1ChaffBurstQty_indexStart);
+            Double F16CManual1ChaffBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1ChaffBurstQty"].GetDoubleLenient();
+            Double F16CManual1ChaffBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1ChaffBurstIntv"].GetDoubleLenient();
+            Double F16CManual1ChaffSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1ChaffSalvoQty"].GetDoubleLenient();
+            Double F16CManual1ChaffSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1ChaffSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual1ChaffBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual1ChaffBurstIntv\"] =") + 31;
-            int F16CManual1ChaffBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual1ChaffBurstIntv_indexStart);
-            string F16CManual1ChaffBurstIntv_string = optionsLuaText.Substring(F16CManual1ChaffBurstIntv_indexStart, F16CManual1ChaffBurstIntv_indexEnd - F16CManual1ChaffBurstIntv_indexStart);
+            Double F16CManual2ChaffBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2ChaffBurstQty"].GetDoubleLenient();
+            Double F16CManual2ChaffBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2ChaffBurstIntv"].GetDoubleLenient();
+            Double F16CManual2ChaffSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2ChaffSalvoQty"].GetDoubleLenient();
+            Double F16CManual2ChaffSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2ChaffSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual1ChaffSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual1ChaffSalvoQty\"] =") + 30;
-            int F16CManual1ChaffSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual1ChaffSalvoQty_indexStart);
-            string F16CManual1ChaffSalvoQty_string = optionsLuaText.Substring(F16CManual1ChaffSalvoQty_indexStart, F16CManual1ChaffSalvoQty_indexEnd - F16CManual1ChaffSalvoQty_indexStart);
+            Double F16CManual3ChaffBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3ChaffBurstQty"].GetDoubleLenient();
+            Double F16CManual3ChaffBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3ChaffBurstIntv"].GetDoubleLenient();
+            Double F16CManual3ChaffSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3ChaffSalvoQty"].GetDoubleLenient();
+            Double F16CManual3ChaffSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3ChaffSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual1ChaffSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual1ChaffSalvoIntv\"] =") + 31;
-            int F16CManual1ChaffSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual1ChaffSalvoIntv_indexStart);
-            string F16CManual1ChaffSalvoIntv_string = optionsLuaText.Substring(F16CManual1ChaffSalvoIntv_indexStart, F16CManual1ChaffSalvoIntv_indexEnd - F16CManual1ChaffSalvoIntv_indexStart);
+            Double F16CManual4ChaffBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4ChaffBurstQty"].GetDoubleLenient();
+            Double F16CManual4ChaffBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4ChaffBurstIntv"].GetDoubleLenient();
+            Double F16CManual4ChaffSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4ChaffSalvoQty"].GetDoubleLenient();
+            Double F16CManual4ChaffSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4ChaffSalvoIntv"].GetDoubleLenient();
 
-            //MessageBox.Show("|" + F16CManual1ChaffBurstQty_string + "|" + F16CManual1ChaffBurstIntv_string + "|" + F16CManual1ChaffSalvoQty_string + "|" + F16CManual1ChaffSalvoIntv_string);
+            Double F16CManual5ChaffBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5ChaffBurstQty"].GetDoubleLenient();
+            Double F16CManual5ChaffBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5ChaffBurstIntv"].GetDoubleLenient();
+            Double F16CManual5ChaffSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5ChaffSalvoQty"].GetDoubleLenient();
+            Double F16CManual5ChaffSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5ChaffSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual2ChaffBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual2ChaffBurstQty\"] =") + 30;
-            int F16CManual2ChaffBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual2ChaffBurstQty_indexStart);
-            string F16CManual2ChaffBurstQty_string = optionsLuaText.Substring(F16CManual2ChaffBurstQty_indexStart, F16CManual2ChaffBurstQty_indexEnd - F16CManual2ChaffBurstQty_indexStart);
-
-            int F16CManual2ChaffBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual2ChaffBurstIntv\"] =") + 31;
-            int F16CManual2ChaffBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual2ChaffBurstIntv_indexStart);
-            string F16CManual2ChaffBurstIntv_string = optionsLuaText.Substring(F16CManual2ChaffBurstIntv_indexStart, F16CManual2ChaffBurstIntv_indexEnd - F16CManual2ChaffBurstIntv_indexStart);
-
-            int F16CManual2ChaffSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual2ChaffSalvoQty\"] =") + 30;
-            int F16CManual2ChaffSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual2ChaffSalvoQty_indexStart);
-            string F16CManual2ChaffSalvoQty_string = optionsLuaText.Substring(F16CManual2ChaffSalvoQty_indexStart, F16CManual2ChaffSalvoQty_indexEnd - F16CManual2ChaffSalvoQty_indexStart);
-
-            int F16CManual2ChaffSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual2ChaffSalvoIntv\"] =") + 31;
-            int F16CManual2ChaffSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual2ChaffSalvoIntv_indexStart);
-            string F16CManual2ChaffSalvoIntv_string = optionsLuaText.Substring(F16CManual2ChaffSalvoIntv_indexStart, F16CManual2ChaffSalvoIntv_indexEnd - F16CManual2ChaffSalvoIntv_indexStart);
+            Double F16CManual6ChaffBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6ChaffBurstQty"].GetDoubleLenient();
+            Double F16CManual6ChaffBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6ChaffBurstIntv"].GetDoubleLenient();
+            Double F16CManual6ChaffSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6ChaffSalvoQty"].GetDoubleLenient();
+            Double F16CManual6ChaffSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6ChaffSalvoIntv"].GetDoubleLenient();
 
 
-            int F16CManual3ChaffBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual3ChaffBurstQty\"] =") + 30;
-            int F16CManual3ChaffBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual3ChaffBurstQty_indexStart);
-            string F16CManual3ChaffBurstQty_string = optionsLuaText.Substring(F16CManual3ChaffBurstQty_indexStart, F16CManual3ChaffBurstQty_indexEnd - F16CManual3ChaffBurstQty_indexStart);
+            Double F16CAuto1ChaffBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1ChaffBurstQty"].GetDoubleLenient();
+            Double F16CAuto1ChaffBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1ChaffBurstIntv"].GetDoubleLenient();
+            Double F16CAuto1ChaffSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1ChaffSalvoQty"].GetDoubleLenient();
+            Double F16CAuto1ChaffSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1ChaffSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual3ChaffBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual3ChaffBurstIntv\"] =") + 31;
-            int F16CManual3ChaffBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual3ChaffBurstIntv_indexStart);
-            string F16CManual3ChaffBurstIntv_string = optionsLuaText.Substring(F16CManual3ChaffBurstIntv_indexStart, F16CManual3ChaffBurstIntv_indexEnd - F16CManual3ChaffBurstIntv_indexStart);
+            Double F16CAuto2ChaffBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2ChaffBurstQty"].GetDoubleLenient();
+            Double F16CAuto2ChaffBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2ChaffBurstIntv"].GetDoubleLenient();
+            Double F16CAuto2ChaffSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2ChaffSalvoQty"].GetDoubleLenient();
+            Double F16CAuto2ChaffSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2ChaffSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual3ChaffSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual3ChaffSalvoQty\"] =") + 30;
-            int F16CManual3ChaffSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual3ChaffSalvoQty_indexStart);
-            string F16CManual3ChaffSalvoQty_string = optionsLuaText.Substring(F16CManual3ChaffSalvoQty_indexStart, F16CManual3ChaffSalvoQty_indexEnd - F16CManual3ChaffSalvoQty_indexStart);
+            Double F16CAuto3ChaffBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3ChaffBurstQty"].GetDoubleLenient();
+            Double F16CAuto3ChaffBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3ChaffBurstIntv"].GetDoubleLenient();
+            Double F16CAuto3ChaffSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3ChaffSalvoQty"].GetDoubleLenient();
+            Double F16CAuto3ChaffSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3ChaffSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual3ChaffSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual3ChaffSalvoIntv\"] =") + 31;
-            int F16CManual3ChaffSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual3ChaffSalvoIntv_indexStart);
-            string F16CManual3ChaffSalvoIntv_string = optionsLuaText.Substring(F16CManual3ChaffSalvoIntv_indexStart, F16CManual3ChaffSalvoIntv_indexEnd - F16CManual3ChaffSalvoIntv_indexStart);
+            //TODO: Integrate this if requested
+            /*
+            Double F16CBypassChaffBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassChaffBurstQty"].GetDoubleLenient();
+            Double F16CBypassChaffBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassChaffBurstIntv"].GetDoubleLenient();
+            Double F16CBypassChaffSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassChaffSalvoQty"].GetDoubleLenient();
+            Double F16CBypassChaffSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassChaffSalvoIntv"].GetDoubleLenient();
+            */
 
-
-            int F16CManual4ChaffBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual4ChaffBurstQty\"] =") + 30;
-            int F16CManual4ChaffBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual4ChaffBurstQty_indexStart);
-            string F16CManual4ChaffBurstQty_string = optionsLuaText.Substring(F16CManual4ChaffBurstQty_indexStart, F16CManual4ChaffBurstQty_indexEnd - F16CManual4ChaffBurstQty_indexStart);
-
-            int F16CManual4ChaffBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual4ChaffBurstIntv\"] =") + 31;
-            int F16CManual4ChaffBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual4ChaffBurstIntv_indexStart);
-            string F16CManual4ChaffBurstIntv_string = optionsLuaText.Substring(F16CManual4ChaffBurstIntv_indexStart, F16CManual4ChaffBurstIntv_indexEnd - F16CManual4ChaffBurstIntv_indexStart);
-
-            int F16CManual4ChaffSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual4ChaffSalvoQty\"] =") + 30;
-            int F16CManual4ChaffSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual4ChaffSalvoQty_indexStart);
-            string F16CManual4ChaffSalvoQty_string = optionsLuaText.Substring(F16CManual4ChaffSalvoQty_indexStart, F16CManual4ChaffSalvoQty_indexEnd - F16CManual4ChaffSalvoQty_indexStart);
-
-            int F16CManual4ChaffSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual4ChaffSalvoIntv\"] =") + 31;
-            int F16CManual4ChaffSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual4ChaffSalvoIntv_indexStart);
-            string F16CManual4ChaffSalvoIntv_string = optionsLuaText.Substring(F16CManual4ChaffSalvoIntv_indexStart, F16CManual4ChaffSalvoIntv_indexEnd - F16CManual4ChaffSalvoIntv_indexStart);
-
-
-            int F16CManual5ChaffBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual5ChaffBurstQty\"] =") + 30;
-            int F16CManual5ChaffBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual5ChaffBurstQty_indexStart);
-            string F16CManual5ChaffBurstQty_string = optionsLuaText.Substring(F16CManual5ChaffBurstQty_indexStart, F16CManual5ChaffBurstQty_indexEnd - F16CManual5ChaffBurstQty_indexStart);
-
-            int F16CManual5ChaffBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual5ChaffBurstIntv\"] =") + 31;
-            int F16CManual5ChaffBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual5ChaffBurstIntv_indexStart);
-            string F16CManual5ChaffBurstIntv_string = optionsLuaText.Substring(F16CManual5ChaffBurstIntv_indexStart, F16CManual5ChaffBurstIntv_indexEnd - F16CManual5ChaffBurstIntv_indexStart);
-
-            int F16CManual5ChaffSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual5ChaffSalvoQty\"] =") + 30;
-            int F16CManual5ChaffSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual5ChaffSalvoQty_indexStart);
-            string F16CManual5ChaffSalvoQty_string = optionsLuaText.Substring(F16CManual5ChaffSalvoQty_indexStart, F16CManual5ChaffSalvoQty_indexEnd - F16CManual5ChaffSalvoQty_indexStart);
-
-            int F16CManual5ChaffSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual5ChaffSalvoIntv\"] =") + 31;
-            int F16CManual5ChaffSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual5ChaffSalvoIntv_indexStart);
-            string F16CManual5ChaffSalvoIntv_string = optionsLuaText.Substring(F16CManual5ChaffSalvoIntv_indexStart, F16CManual5ChaffSalvoIntv_indexEnd - F16CManual5ChaffSalvoIntv_indexStart);
-
-
-            int F16CManual6ChaffBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual6ChaffBurstQty\"] =") + 30;
-            int F16CManual6ChaffBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual6ChaffBurstQty_indexStart);
-            string F16CManual6ChaffBurstQty_string = optionsLuaText.Substring(F16CManual6ChaffBurstQty_indexStart, F16CManual6ChaffBurstQty_indexEnd - F16CManual6ChaffBurstQty_indexStart);
-
-            int F16CManual6ChaffBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual6ChaffBurstIntv\"] =") + 31;
-            int F16CManual6ChaffBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual6ChaffBurstIntv_indexStart);
-            string F16CManual6ChaffBurstIntv_string = optionsLuaText.Substring(F16CManual6ChaffBurstIntv_indexStart, F16CManual6ChaffBurstIntv_indexEnd - F16CManual6ChaffBurstIntv_indexStart);
-
-            int F16CManual6ChaffSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual6ChaffSalvoQty\"] =") + 30;
-            int F16CManual6ChaffSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual6ChaffSalvoQty_indexStart);
-            string F16CManual6ChaffSalvoQty_string = optionsLuaText.Substring(F16CManual6ChaffSalvoQty_indexStart, F16CManual6ChaffSalvoQty_indexEnd - F16CManual6ChaffSalvoQty_indexStart);
-
-            int F16CManual6ChaffSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual6ChaffSalvoIntv\"] =") + 31;
-            int F16CManual6ChaffSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual6ChaffSalvoIntv_indexStart);
-            string F16CManual6ChaffSalvoIntv_string = optionsLuaText.Substring(F16CManual6ChaffSalvoIntv_indexStart, F16CManual6ChaffSalvoIntv_indexEnd - F16CManual6ChaffSalvoIntv_indexStart);
-
-
-            int F16COldSamChaffBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16COldSamChaffBurstQty\"] =") + 29;
-            int F16COldSamChaffBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16COldSamChaffBurstQty_indexStart);
-            string F16COldSamChaffBurstQty_string = optionsLuaText.Substring(F16COldSamChaffBurstQty_indexStart, F16COldSamChaffBurstQty_indexEnd - F16COldSamChaffBurstQty_indexStart);
-
-            int F16COldSamChaffBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16COldSamChaffBurstIntv\"] =") + 30;
-            int F16COldSamChaffBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16COldSamChaffBurstIntv_indexStart);
-            string F16COldSamChaffBurstIntv_string = optionsLuaText.Substring(F16COldSamChaffBurstIntv_indexStart, F16COldSamChaffBurstIntv_indexEnd - F16COldSamChaffBurstIntv_indexStart);
-
-            int F16COldSamChaffSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16COldSamChaffSalvoQty\"] =") + 29;
-            int F16COldSamChaffSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16COldSamChaffSalvoQty_indexStart);
-            string F16COldSamChaffSalvoQty_string = optionsLuaText.Substring(F16COldSamChaffSalvoQty_indexStart, F16COldSamChaffSalvoQty_indexEnd - F16COldSamChaffSalvoQty_indexStart);
-
-            int F16COldSamChaffSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16COldSamChaffSalvoIntv\"] =") + 30;
-            int F16COldSamChaffSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16COldSamChaffSalvoIntv_indexStart);
-            string F16COldSamChaffSalvoIntv_string = optionsLuaText.Substring(F16COldSamChaffSalvoIntv_indexStart, F16COldSamChaffSalvoIntv_indexEnd - F16COldSamChaffSalvoIntv_indexStart);
-
-
-            int F16CCurrentSamChaffBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CCurrentSamChaffBurstQty\"] =") + 33;
-            int F16CCurrentSamChaffBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CCurrentSamChaffBurstQty_indexStart);
-            string F16CCurrentSamChaffBurstQty_string = optionsLuaText.Substring(F16CCurrentSamChaffBurstQty_indexStart, F16CCurrentSamChaffBurstQty_indexEnd - F16CCurrentSamChaffBurstQty_indexStart);
-
-            int F16CCurrentSamChaffBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CCurrentSamChaffBurstIntv\"] =") + 34;
-            int F16CCurrentSamChaffBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CCurrentSamChaffBurstIntv_indexStart);
-            string F16CCurrentSamChaffBurstIntv_string = optionsLuaText.Substring(F16CCurrentSamChaffBurstIntv_indexStart, F16CCurrentSamChaffBurstIntv_indexEnd - F16CCurrentSamChaffBurstIntv_indexStart);
-
-            int F16CCurrentSamChaffSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CCurrentSamChaffSalvoQty\"] =") + 33;
-            int F16CCurrentSamChaffSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CCurrentSamChaffSalvoQty_indexStart);
-            string F16CCurrentSamChaffSalvoQty_string = optionsLuaText.Substring(F16CCurrentSamChaffSalvoQty_indexStart, F16CCurrentSamChaffSalvoQty_indexEnd - F16CCurrentSamChaffSalvoQty_indexStart);
-
-            int F16CCurrentSamChaffSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CCurrentSamChaffSalvoIntv\"] =") + 34;
-            int F16CCurrentSamChaffSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CCurrentSamChaffSalvoIntv_indexStart);
-            string F16CCurrentSamChaffSalvoIntv_string = optionsLuaText.Substring(F16CCurrentSamChaffSalvoIntv_indexStart, F16CCurrentSamChaffSalvoIntv_indexEnd - F16CCurrentSamChaffSalvoIntv_indexStart);
-
-
-            int F16CIrSamChaffBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CIrSamChaffBurstQty\"] =") + 28;
-            int F16CIrSamChaffBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CIrSamChaffBurstQty_indexStart);
-            string F16CIrSamChaffBurstQty_string = optionsLuaText.Substring(F16CIrSamChaffBurstQty_indexStart, F16CIrSamChaffBurstQty_indexEnd - F16CIrSamChaffBurstQty_indexStart);
-
-            int F16CIrSamChaffBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CIrSamChaffBurstIntv\"] =") + 29;
-            int F16CIrSamChaffBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CIrSamChaffBurstIntv_indexStart);
-            string F16CIrSamChaffBurstIntv_string = optionsLuaText.Substring(F16CIrSamChaffBurstIntv_indexStart, F16CIrSamChaffBurstIntv_indexEnd - F16CIrSamChaffBurstIntv_indexStart);
-
-            int F16CIrSamChaffSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CIrSamChaffSalvoQty\"] =") + 28;
-            int F16CIrSamChaffSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CIrSamChaffSalvoQty_indexStart);
-            string F16CIrSamChaffSalvoQty_string = optionsLuaText.Substring(F16CIrSamChaffSalvoQty_indexStart, F16CIrSamChaffSalvoQty_indexEnd - F16CIrSamChaffSalvoQty_indexStart);
-
-            int F16CIrSamChaffSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CIrSamChaffSalvoIntv\"] =") + 29;
-            int F16CIrSamChaffSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CIrSamChaffSalvoIntv_indexStart);
-            string F16CIrSamChaffSalvoIntv_string = optionsLuaText.Substring(F16CIrSamChaffSalvoIntv_indexStart, F16CIrSamChaffSalvoIntv_indexEnd - F16CIrSamChaffSalvoIntv_indexStart);
+            Double F16CBypassChaffBurstQty = 1;
+            Double F16CBypassChaffBurstIntv = 0.02;
+            Double F16CBypassChaffSalvoQty = 1;
+            Double F16CBypassChaffSalvoIntv = 0.5;
 
 
             //flares
+            Double F16CManual1FlareBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1FlareBurstQty"].GetDoubleLenient();
+            Double F16CManual1FlareBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1FlareBurstIntv"].GetDoubleLenient();
+            Double F16CManual1FlareSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1FlareSalvoQty"].GetDoubleLenient();
+            Double F16CManual1FlareSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1FlareSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual1FlareBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual1FlareBurstQty\"] =") + 30;
-            int F16CManual1FlareBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual1FlareBurstQty_indexStart);
-            string F16CManual1FlareBurstQty_string = optionsLuaText.Substring(F16CManual1FlareBurstQty_indexStart, F16CManual1FlareBurstQty_indexEnd - F16CManual1FlareBurstQty_indexStart);
+            Double F16CManual2FlareBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2FlareBurstQty"].GetDoubleLenient();
+            Double F16CManual2FlareBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2FlareBurstIntv"].GetDoubleLenient();
+            Double F16CManual2FlareSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2FlareSalvoQty"].GetDoubleLenient();
+            Double F16CManual2FlareSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2FlareSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual1FlareBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual1FlareBurstIntv\"] =") + 31;
-            int F16CManual1FlareBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual1FlareBurstIntv_indexStart);
-            string F16CManual1FlareBurstIntv_string = optionsLuaText.Substring(F16CManual1FlareBurstIntv_indexStart, F16CManual1FlareBurstIntv_indexEnd - F16CManual1FlareBurstIntv_indexStart);
+            Double F16CManual3FlareBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3FlareBurstQty"].GetDoubleLenient();
+            Double F16CManual3FlareBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3FlareBurstIntv"].GetDoubleLenient();
+            Double F16CManual3FlareSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3FlareSalvoQty"].GetDoubleLenient();
+            Double F16CManual3FlareSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3FlareSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual1FlareSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual1FlareSalvoQty\"] =") + 30;
-            int F16CManual1FlareSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual1FlareSalvoQty_indexStart);
-            string F16CManual1FlareSalvoQty_string = optionsLuaText.Substring(F16CManual1FlareSalvoQty_indexStart, F16CManual1FlareSalvoQty_indexEnd - F16CManual1FlareSalvoQty_indexStart);
+            Double F16CManual4FlareBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4FlareBurstQty"].GetDoubleLenient();
+            Double F16CManual4FlareBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4FlareBurstIntv"].GetDoubleLenient();
+            Double F16CManual4FlareSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4FlareSalvoQty"].GetDoubleLenient();
+            Double F16CManual4FlareSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4FlareSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual1FlareSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual1FlareSalvoIntv\"] =") + 31;
-            int F16CManual1FlareSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual1FlareSalvoIntv_indexStart);
-            string F16CManual1FlareSalvoIntv_string = optionsLuaText.Substring(F16CManual1FlareSalvoIntv_indexStart, F16CManual1FlareSalvoIntv_indexEnd - F16CManual1FlareSalvoIntv_indexStart);
+            Double F16CManual5FlareBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5FlareBurstQty"].GetDoubleLenient();
+            Double F16CManual5FlareBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5FlareBurstIntv"].GetDoubleLenient();
+            Double F16CManual5FlareSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5FlareSalvoQty"].GetDoubleLenient();
+            Double F16CManual5FlareSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5FlareSalvoIntv"].GetDoubleLenient();
 
-            //MessageBox.Show("|" + F16CManual1FlareBurstQty_string + "|" + F16CManual1FlareBurstIntv_string + "|" + F16CManual1FlareSalvoQty_string + "|" + F16CManual1FlareSalvoIntv_string);
-
-            int F16CManual2FlareBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual2FlareBurstQty\"] =") + 30;
-            int F16CManual2FlareBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual2FlareBurstQty_indexStart);
-            string F16CManual2FlareBurstQty_string = optionsLuaText.Substring(F16CManual2FlareBurstQty_indexStart, F16CManual2FlareBurstQty_indexEnd - F16CManual2FlareBurstQty_indexStart);
-
-            int F16CManual2FlareBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual2FlareBurstIntv\"] =") + 31;
-            int F16CManual2FlareBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual2FlareBurstIntv_indexStart);
-            string F16CManual2FlareBurstIntv_string = optionsLuaText.Substring(F16CManual2FlareBurstIntv_indexStart, F16CManual2FlareBurstIntv_indexEnd - F16CManual2FlareBurstIntv_indexStart);
-
-            int F16CManual2FlareSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual2FlareSalvoQty\"] =") + 30;
-            int F16CManual2FlareSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual2FlareSalvoQty_indexStart);
-            string F16CManual2FlareSalvoQty_string = optionsLuaText.Substring(F16CManual2FlareSalvoQty_indexStart, F16CManual2FlareSalvoQty_indexEnd - F16CManual2FlareSalvoQty_indexStart);
-
-            int F16CManual2FlareSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual2FlareSalvoIntv\"] =") + 31;
-            int F16CManual2FlareSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual2FlareSalvoIntv_indexStart);
-            string F16CManual2FlareSalvoIntv_string = optionsLuaText.Substring(F16CManual2FlareSalvoIntv_indexStart, F16CManual2FlareSalvoIntv_indexEnd - F16CManual2FlareSalvoIntv_indexStart);
+            Double F16CManual6FlareBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6FlareBurstQty"].GetDoubleLenient();
+            Double F16CManual6FlareBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6FlareBurstIntv"].GetDoubleLenient();
+            Double F16CManual6FlareSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6FlareSalvoQty"].GetDoubleLenient();
+            Double F16CManual6FlareSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6FlareSalvoIntv"].GetDoubleLenient();
 
 
-            int F16CManual3FlareBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual3FlareBurstQty\"] =") + 30;
-            int F16CManual3FlareBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual3FlareBurstQty_indexStart);
-            string F16CManual3FlareBurstQty_string = optionsLuaText.Substring(F16CManual3FlareBurstQty_indexStart, F16CManual3FlareBurstQty_indexEnd - F16CManual3FlareBurstQty_indexStart);
+            Double F16CAuto1FlareBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1FlareBurstQty"].GetDoubleLenient();
+            Double F16CAuto1FlareBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1FlareBurstIntv"].GetDoubleLenient();
+            Double F16CAuto1FlareSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1FlareSalvoQty"].GetDoubleLenient();
+            Double F16CAuto1FlareSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1FlareSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual3FlareBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual3FlareBurstIntv\"] =") + 31;
-            int F16CManual3FlareBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual3FlareBurstIntv_indexStart);
-            string F16CManual3FlareBurstIntv_string = optionsLuaText.Substring(F16CManual3FlareBurstIntv_indexStart, F16CManual3FlareBurstIntv_indexEnd - F16CManual3FlareBurstIntv_indexStart);
+            Double F16CAuto2FlareBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2FlareBurstQty"].GetDoubleLenient();
+            Double F16CAuto2FlareBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2FlareBurstIntv"].GetDoubleLenient();
+            Double F16CAuto2FlareSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2FlareSalvoQty"].GetDoubleLenient();
+            Double F16CAuto2FlareSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2FlareSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual3FlareSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual3FlareSalvoQty\"] =") + 30;
-            int F16CManual3FlareSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual3FlareSalvoQty_indexStart);
-            string F16CManual3FlareSalvoQty_string = optionsLuaText.Substring(F16CManual3FlareSalvoQty_indexStart, F16CManual3FlareSalvoQty_indexEnd - F16CManual3FlareSalvoQty_indexStart);
+            Double F16CAuto3FlareBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3FlareBurstQty"].GetDoubleLenient();
+            Double F16CAuto3FlareBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3FlareBurstIntv"].GetDoubleLenient();
+            Double F16CAuto3FlareSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3FlareSalvoQty"].GetDoubleLenient();
+            Double F16CAuto3FlareSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3FlareSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual3FlareSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual3FlareSalvoIntv\"] =") + 31;
-            int F16CManual3FlareSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual3FlareSalvoIntv_indexStart);
-            string F16CManual3FlareSalvoIntv_string = optionsLuaText.Substring(F16CManual3FlareSalvoIntv_indexStart, F16CManual3FlareSalvoIntv_indexEnd - F16CManual3FlareSalvoIntv_indexStart);
+            //TODO: Integrate this if requested
+            /*
+            Double F16CBypassFlareBurstQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassFlareBurstQty"].GetDoubleLenient();
+            Double F16CBypassFlareBurstIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassFlareBurstIntv"].GetDoubleLenient();
+            Double F16CBypassFlareSalvoQty = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassFlareSalvoQty"].GetDoubleLenient();
+            Double F16CBypassFlareSalvoIntv = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassFlareSalvoIntv"].GetDoubleLenient();
+            */
 
+            Double F16CBypassFlareBurstQty = 1;
+            Double F16CBypassFlareBurstIntv = 0.02;
+            Double F16CBypassFlareSalvoQty = 1;
+            Double F16CBypassFlareSalvoIntv = 0.5;
 
-            int F16CManual4FlareBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual4FlareBurstQty\"] =") + 30;
-            int F16CManual4FlareBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual4FlareBurstQty_indexStart);
-            string F16CManual4FlareBurstQty_string = optionsLuaText.Substring(F16CManual4FlareBurstQty_indexStart, F16CManual4FlareBurstQty_indexEnd - F16CManual4FlareBurstQty_indexStart);
+            //future code if you figgure out how to parse the CMDS lua fie with LSON
+            //try
 
-            int F16CManual4FlareBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual4FlareBurstIntv\"] =") + 31;
-            int F16CManual4FlareBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual4FlareBurstIntv_indexStart);
-            string F16CManual4FlareBurstIntv_string = optionsLuaText.Substring(F16CManual4FlareBurstIntv_indexStart, F16CManual4FlareBurstIntv_indexEnd - F16CManual4FlareBurstIntv_indexStart);
+            //{
 
-            int F16CManual4FlareSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual4FlareSalvoQty\"] =") + 30;
-            int F16CManual4FlareSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual4FlareSalvoQty_indexStart);
-            string F16CManual4FlareSalvoQty_string = optionsLuaText.Substring(F16CManual4FlareSalvoQty_indexStart, F16CManual4FlareSalvoQty_indexEnd - F16CManual4FlareSalvoQty_indexStart);
+            /*
+            //now we are going to take the falues from the options Lua and put them into the f16CMDS.lua, directly
 
-            int F16CManual4FlareSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual4FlareSalvoIntv\"] =") + 31;
-            int F16CManual4FlareSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual4FlareSalvoIntv_indexStart);
-            string F16CManual4FlareSalvoIntv_string = optionsLuaText.Substring(F16CManual4FlareSalvoIntv_indexStart, F16CManual4FlareSalvoIntv_indexEnd - F16CManual4FlareSalvoIntv_indexStart);
+            // example: Double M2000CManual01Chaff = optionsLuaText["options"]["plugins"]["DiCE M2000C"]["M2000CManual01Chaff"].GetDoubleLenient();
 
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_1]"]["chaff"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1ChaffBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_1]"]["chaff"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1ChaffBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_1]"]["chaff"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1ChaffSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_1]"]["chaff"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1ChaffSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual5FlareBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual5FlareBurstQty\"] =") + 30;
-            int F16CManual5FlareBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual5FlareBurstQty_indexStart);
-            string F16CManual5FlareBurstQty_string = optionsLuaText.Substring(F16CManual5FlareBurstQty_indexStart, F16CManual5FlareBurstQty_indexEnd - F16CManual5FlareBurstQty_indexStart);
-
-            int F16CManual5FlareBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual5FlareBurstIntv\"] =") + 31;
-            int F16CManual5FlareBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual5FlareBurstIntv_indexStart);
-            string F16CManual5FlareBurstIntv_string = optionsLuaText.Substring(F16CManual5FlareBurstIntv_indexStart, F16CManual5FlareBurstIntv_indexEnd - F16CManual5FlareBurstIntv_indexStart);
-
-            int F16CManual5FlareSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual5FlareSalvoQty\"] =") + 30;
-            int F16CManual5FlareSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual5FlareSalvoQty_indexStart);
-            string F16CManual5FlareSalvoQty_string = optionsLuaText.Substring(F16CManual5FlareSalvoQty_indexStart, F16CManual5FlareSalvoQty_indexEnd - F16CManual5FlareSalvoQty_indexStart);
-
-            int F16CManual5FlareSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual5FlareSalvoIntv\"] =") + 31;
-            int F16CManual5FlareSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual5FlareSalvoIntv_indexStart);
-            string F16CManual5FlareSalvoIntv_string = optionsLuaText.Substring(F16CManual5FlareSalvoIntv_indexStart, F16CManual5FlareSalvoIntv_indexEnd - F16CManual5FlareSalvoIntv_indexStart);
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_1]"]["flare"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1FlareBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_1]"]["flare"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1FlareBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_1]"]["flare"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1FlareSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_1]"]["flare"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual1FlareSalvoIntv"].GetDoubleLenient();
 
 
-            int F16CManual6FlareBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual6FlareBurstQty\"] =") + 30;
-            int F16CManual6FlareBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual6FlareBurstQty_indexStart);
-            string F16CManual6FlareBurstQty_string = optionsLuaText.Substring(F16CManual6FlareBurstQty_indexStart, F16CManual6FlareBurstQty_indexEnd - F16CManual6FlareBurstQty_indexStart);
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_2]"]["chaff"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2ChaffBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_2]"]["chaff"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2ChaffBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_2]"]["chaff"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2ChaffSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_2]"]["chaff"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2ChaffSalvoIntv"].GetDoubleLenient();
 
-            int F16CManual6FlareBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual6FlareBurstIntv\"] =") + 31;
-            int F16CManual6FlareBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual6FlareBurstIntv_indexStart);
-            string F16CManual6FlareBurstIntv_string = optionsLuaText.Substring(F16CManual6FlareBurstIntv_indexStart, F16CManual6FlareBurstIntv_indexEnd - F16CManual6FlareBurstIntv_indexStart);
-
-            int F16CManual6FlareSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CManual6FlareSalvoQty\"] =") + 30;
-            int F16CManual6FlareSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CManual6FlareSalvoQty_indexStart);
-            string F16CManual6FlareSalvoQty_string = optionsLuaText.Substring(F16CManual6FlareSalvoQty_indexStart, F16CManual6FlareSalvoQty_indexEnd - F16CManual6FlareSalvoQty_indexStart);
-
-            int F16CManual6FlareSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CManual6FlareSalvoIntv\"] =") + 31;
-            int F16CManual6FlareSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CManual6FlareSalvoIntv_indexStart);
-            string F16CManual6FlareSalvoIntv_string = optionsLuaText.Substring(F16CManual6FlareSalvoIntv_indexStart, F16CManual6FlareSalvoIntv_indexEnd - F16CManual6FlareSalvoIntv_indexStart);
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_2]"]["flare"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2FlareBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_2]"]["flare"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2FlareBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_2]"]["flare"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2FlareSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_2]"]["flare"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual2FlareSalvoIntv"].GetDoubleLenient();
 
 
-            int F16COldSamFlareBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16COldSamFlareBurstQty\"] =") + 29;
-            int F16COldSamFlareBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16COldSamFlareBurstQty_indexStart);
-            string F16COldSamFlareBurstQty_string = optionsLuaText.Substring(F16COldSamFlareBurstQty_indexStart, F16COldSamFlareBurstQty_indexEnd - F16COldSamFlareBurstQty_indexStart);
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_3]"]["chaff"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3ChaffBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_3]"]["chaff"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3ChaffBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_3]"]["chaff"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3ChaffSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_3]"]["chaff"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3ChaffSalvoIntv"].GetDoubleLenient();
 
-            int F16COldSamFlareBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16COldSamFlareBurstIntv\"] =") + 30;
-            int F16COldSamFlareBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16COldSamFlareBurstIntv_indexStart);
-            string F16COldSamFlareBurstIntv_string = optionsLuaText.Substring(F16COldSamFlareBurstIntv_indexStart, F16COldSamFlareBurstIntv_indexEnd - F16COldSamFlareBurstIntv_indexStart);
-
-            int F16COldSamFlareSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16COldSamFlareSalvoQty\"] =") + 29;
-            int F16COldSamFlareSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16COldSamFlareSalvoQty_indexStart);
-            string F16COldSamFlareSalvoQty_string = optionsLuaText.Substring(F16COldSamFlareSalvoQty_indexStart, F16COldSamFlareSalvoQty_indexEnd - F16COldSamFlareSalvoQty_indexStart);
-
-            int F16COldSamFlareSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16COldSamFlareSalvoIntv\"] =") + 30;
-            int F16COldSamFlareSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16COldSamFlareSalvoIntv_indexStart);
-            string F16COldSamFlareSalvoIntv_string = optionsLuaText.Substring(F16COldSamFlareSalvoIntv_indexStart, F16COldSamFlareSalvoIntv_indexEnd - F16COldSamFlareSalvoIntv_indexStart);
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_3]"]["flare"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3FlareBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_3]"]["flare"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3FlareBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_3]"]["flare"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3FlareSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_3]"]["flare"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual3FlareSalvoIntv"].GetDoubleLenient();
 
 
-            int F16CCurrentSamFlareBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CCurrentSamFlareBurstQty\"] =") + 33;
-            int F16CCurrentSamFlareBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CCurrentSamFlareBurstQty_indexStart);
-            string F16CCurrentSamFlareBurstQty_string = optionsLuaText.Substring(F16CCurrentSamFlareBurstQty_indexStart, F16CCurrentSamFlareBurstQty_indexEnd - F16CCurrentSamFlareBurstQty_indexStart);
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_4]"]["chaff"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4ChaffBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_4]"]["chaff"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4ChaffBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_4]"]["chaff"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4ChaffSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_4]"]["chaff"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4ChaffSalvoIntv"].GetDoubleLenient();
 
-            int F16CCurrentSamFlareBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CCurrentSamFlareBurstIntv\"] =") + 34;
-            int F16CCurrentSamFlareBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CCurrentSamFlareBurstIntv_indexStart);
-            string F16CCurrentSamFlareBurstIntv_string = optionsLuaText.Substring(F16CCurrentSamFlareBurstIntv_indexStart, F16CCurrentSamFlareBurstIntv_indexEnd - F16CCurrentSamFlareBurstIntv_indexStart);
-
-            int F16CCurrentSamFlareSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CCurrentSamFlareSalvoQty\"] =") + 33;
-            int F16CCurrentSamFlareSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CCurrentSamFlareSalvoQty_indexStart);
-            string F16CCurrentSamFlareSalvoQty_string = optionsLuaText.Substring(F16CCurrentSamFlareSalvoQty_indexStart, F16CCurrentSamFlareSalvoQty_indexEnd - F16CCurrentSamFlareSalvoQty_indexStart);
-
-            int F16CCurrentSamFlareSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CCurrentSamFlareSalvoIntv\"] =") + 34;
-            int F16CCurrentSamFlareSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CCurrentSamFlareSalvoIntv_indexStart);
-            string F16CCurrentSamFlareSalvoIntv_string = optionsLuaText.Substring(F16CCurrentSamFlareSalvoIntv_indexStart, F16CCurrentSamFlareSalvoIntv_indexEnd - F16CCurrentSamFlareSalvoIntv_indexStart);
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_4]"]["flare"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4FlareBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_4]"]["flare"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4FlareBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_4]"]["flare"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4FlareSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_4]"]["flare"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual4FlareSalvoIntv"].GetDoubleLenient();
 
 
-            int F16CIrSamFlareBurstQty_indexStart = optionsLuaText.IndexOf("[\"F16CIrSamFlareBurstQty\"] =") + 28;
-            int F16CIrSamFlareBurstQty_indexEnd = optionsLuaText.IndexOf(",", F16CIrSamFlareBurstQty_indexStart);
-            string F16CIrSamFlareBurstQty_string = optionsLuaText.Substring(F16CIrSamFlareBurstQty_indexStart, F16CIrSamFlareBurstQty_indexEnd - F16CIrSamFlareBurstQty_indexStart);
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_5]"]["chaff"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5ChaffBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_5]"]["chaff"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5ChaffBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_5]"]["chaff"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5ChaffSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_5]"]["chaff"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5ChaffSalvoIntv"].GetDoubleLenient();
 
-            int F16CIrSamFlareBurstIntv_indexStart = optionsLuaText.IndexOf("[\"F16CIrSamFlareBurstIntv\"] =") + 29;
-            int F16CIrSamFlareBurstIntv_indexEnd = optionsLuaText.IndexOf(",", F16CIrSamFlareBurstIntv_indexStart);
-            string F16CIrSamFlareBurstIntv_string = optionsLuaText.Substring(F16CIrSamFlareBurstIntv_indexStart, F16CIrSamFlareBurstIntv_indexEnd - F16CIrSamFlareBurstIntv_indexStart);
-
-            int F16CIrSamFlareSalvoQty_indexStart = optionsLuaText.IndexOf("[\"F16CIrSamFlareSalvoQty\"] =") + 28;
-            int F16CIrSamFlareSalvoQty_indexEnd = optionsLuaText.IndexOf(",", F16CIrSamFlareSalvoQty_indexStart);
-            string F16CIrSamFlareSalvoQty_string = optionsLuaText.Substring(F16CIrSamFlareSalvoQty_indexStart, F16CIrSamFlareSalvoQty_indexEnd - F16CIrSamFlareSalvoQty_indexStart);
-
-            int F16CIrSamFlareSalvoIntv_indexStart = optionsLuaText.IndexOf("[\"F16CIrSamFlareSalvoIntv\"] =") + 29;
-            int F16CIrSamFlareSalvoIntv_indexEnd = optionsLuaText.IndexOf(",", F16CIrSamFlareSalvoIntv_indexStart);
-            string F16CIrSamFlareSalvoIntv_string = optionsLuaText.Substring(F16CIrSamFlareSalvoIntv_indexStart, F16CIrSamFlareSalvoIntv_indexEnd - F16CIrSamFlareSalvoIntv_indexStart);
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_5]"]["flare"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5FlareBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_5]"]["flare"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5FlareBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_5]"]["flare"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5FlareSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_5]"]["flare"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual5FlareSalvoIntv"].GetDoubleLenient();
 
 
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_6]"]["chaff"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6ChaffBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_6]"]["chaff"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6ChaffBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_6]"]["chaff"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6ChaffSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_6]"]["chaff"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6ChaffSalvoIntv"].GetDoubleLenient();
+
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_6]"]["flare"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6FlareBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_6]"]["flare"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6FlareBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_6]"]["flare"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6FlareSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.MAN_6]"]["flare"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CManual6FlareSalvoIntv"].GetDoubleLenient();
+
+
+            //TODO: Remeber to rename these in the optionsDb.lua from Old/NewSam to Auto123 and Bypass
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_1]"]["chaff"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1ChaffBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_1]"]["chaff"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1ChaffBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_1]"]["chaff"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1ChaffSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_1]"]["chaff"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1ChaffSalvoIntv"].GetDoubleLenient();
+
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_1]"]["flare"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1FlareBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_1]"]["flare"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1FlareBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_1]"]["flare"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1FlareSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_1]"]["flare"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto1FlareSalvoIntv"].GetDoubleLenient();
+
+
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_2]"]["chaff"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2ChaffBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_2]"]["chaff"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2ChaffBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_2]"]["chaff"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2ChaffSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_2]"]["chaff"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2ChaffSalvoIntv"].GetDoubleLenient();
+
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_2]"]["flare"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2FlareBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_2]"]["flare"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2FlareBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_2]"]["flare"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2FlareSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_2]"]["flare"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto2FlareSalvoIntv"].GetDoubleLenient();
+
+
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_3]"]["chaff"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3ChaffBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_3]"]["chaff"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3ChaffBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_3]"]["chaff"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3ChaffSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_3]"]["chaff"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3ChaffSalvoIntv"].GetDoubleLenient();
+
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_3]"]["flare"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3FlareBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_3]"]["flare"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3FlareBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_3]"]["flare"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3FlareSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.AUTO_3]"]["flare"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CAuto3FlareSalvoIntv"].GetDoubleLenient();
+
+
+            */
+
+            //TODO:Implement this in the Db and GUI in DCS
+            /*
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.BYP]"]["chaff"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassChaffBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.BYP]"]["chaff"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassChaffBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.BYP]"]["chaff"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassChaffSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.BYP]"]["chaff"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassChaffSalvoIntv"].GetDoubleLenient();
+
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.BYP]"]["flare"]["burstQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassFlareBurstQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.BYP]"]["flare"]["burstIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassFlareBurstIntv"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.BYP]"]["flare"]["salvoQty"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassFlareSalvoQty"].GetDoubleLenient();
+            cmdsLua_F16C_fullPath_LsonParse["programs[ProgramNames.BYP]"]["flare"]["salvoIntv"] = optionsLuaText["options"]["plugins"]["DiCE F-16C"]["F16CBypassFlareSalvoIntv"].GetDoubleLenient();
+            */
+
+            //close close the F16CMDS.lua file to finalize the write
+
+            //File.WriteAllText(cmdsLua_F16C_fullPath, LsonVars.ToString(cmdsLua_F16C_fullPath_LsonParse)); // serialize back to a file
+
+
+            //https://stackoverflow.com/questions/5920882/file-move-does-not-work-file-already-exists
+            //playCompleteSound();
+
+            //richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "F-16C CMS file exported.");
+            //    richTextBox_log.ScrollToEnd();
+            //}
+            //catch (IOException h)
+            //{
+            //    richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "DiCE could not write the F-16C CMS lua.");
+            //    richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + h.Message);
+            //    richTextBox_log.ScrollToEnd();
+            //}
+
+            
             string[] luaExportString = {"local gettext = require(\"i_18n\")",
                 "_ = gettext.translate",
                 "",
@@ -1611,9 +1600,7 @@ namespace DiCE
                 "	AUTO_1 = counter(),",
                 "	AUTO_2 = counter(),",
                 "	AUTO_3 = counter(),",
-                "	AUTO_4 = counter(),",
-                "	AUTO_5 = counter(),",
-                "	AUTO_6 = counter(),",
+                "	BYP = 27,",
                 "}",
                 "",
                 "programs = {}",
@@ -1622,145 +1609,161 @@ namespace DiCE
                 "-- MAN 1",
                 "programs[ProgramNames.MAN_1] = {",
                 "	chaff = {",
-                "		burstQty 	=" + F16CManual1ChaffBurstQty_string + ",",
-                "		burstIntv	=" + F16CManual1ChaffBurstIntv_string + ",",
-                "		salvoQty	=" + F16CManual1ChaffSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CManual1ChaffSalvoIntv_string + ",",
+                "		burstQty 	= " + F16CManual1ChaffBurstQty + ",",
+                "		burstIntv	= " + F16CManual1ChaffBurstIntv + ",",
+                "		salvoQty	= " + F16CManual1ChaffSalvoQty + ",",
+                "		salvoIntv	= " + F16CManual1ChaffSalvoIntv + ",",
                 "	},",
                 "	flare = {",
-                "		burstQty	=" + F16CManual1FlareBurstQty_string + ",",
-                "		burstIntv	=" + F16CManual1FlareBurstIntv_string + ",",
-                "		salvoQty	=" + F16CManual1FlareSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CManual1FlareSalvoIntv_string + ",",
+                "		burstQty	= " + F16CManual1FlareBurstQty + ",",
+                "		burstIntv	= " + F16CManual1FlareBurstIntv + ",",
+                "		salvoQty	= " + F16CManual1FlareSalvoQty + ",",
+                "		salvoIntv	= " + F16CManual1FlareSalvoIntv + ",",
                 "	},",
                 "}",
                 "",
                 "-- MAN 2",
                 "programs[ProgramNames.MAN_2] = {",
                 "	chaff = {",
-                "		burstQty 	=" + F16CManual2ChaffBurstQty_string + ",",
-                "		burstIntv	=" + F16CManual2ChaffBurstIntv_string + ",",
-                "		salvoQty	=" + F16CManual2ChaffSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CManual2ChaffSalvoIntv_string + ",",
+                "		burstQty 	= " + F16CManual2ChaffBurstQty + ",",
+                "		burstIntv	= " + F16CManual2ChaffBurstIntv + ",",
+                "		salvoQty	= " + F16CManual2ChaffSalvoQty + ",",
+                "		salvoIntv	= " + F16CManual2ChaffSalvoIntv + ",",
                 "	},",
                 "	flare = {",
-                "		burstQty	=" + F16CManual2FlareBurstQty_string + ",",
-                "		burstIntv	=" + F16CManual2FlareBurstIntv_string + ",",
-                "		salvoQty	=" + F16CManual2FlareSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CManual2FlareSalvoIntv_string + ",",
+                "		burstQty	= " + F16CManual2FlareBurstQty + ",",
+                "		burstIntv	= " + F16CManual2FlareBurstIntv + ",",
+                "		salvoQty	= " + F16CManual2FlareSalvoQty + ",",
+                "		salvoIntv	= " + F16CManual2FlareSalvoIntv + ",",
                 "	},",
                 "}",
                 "",
                 "-- MAN 3",
                 "programs[ProgramNames.MAN_3] = {",
                 "	chaff = {",
-                "		burstQty 	=" + F16CManual3ChaffBurstQty_string + ",",
-                "		burstIntv	=" + F16CManual3ChaffBurstIntv_string + ",",
-                "		salvoQty	=" + F16CManual3ChaffSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CManual3ChaffSalvoIntv_string + ",",
+                "		burstQty 	= " + F16CManual3ChaffBurstQty + ",",
+                "		burstIntv	= " + F16CManual3ChaffBurstIntv + ",",
+                "		salvoQty	= " + F16CManual3ChaffSalvoQty + ",",
+                "		salvoIntv	= " + F16CManual3ChaffSalvoIntv + ",",
                 "	},",
                 "	flare = {",
-                "		burstQty	=" + F16CManual3FlareBurstQty_string + ",",
-                "		burstIntv	=" + F16CManual3FlareBurstIntv_string + ",",
-                "		salvoQty	=" + F16CManual3FlareSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CManual3FlareSalvoIntv_string + ",",
+                "		burstQty	= " + F16CManual3FlareBurstQty + ",",
+                "		burstIntv	= " + F16CManual3FlareBurstIntv + ",",
+                "		salvoQty	= " + F16CManual3FlareSalvoQty + ",",
+                "		salvoIntv	= " + F16CManual3FlareSalvoIntv + ",",
                 "	},",
                 "}",
                 "",
                 "-- MAN 4",
                 "programs[ProgramNames.MAN_4] = {",
                 "	chaff = {",
-                "		burstQty 	=" + F16CManual4ChaffBurstQty_string + ",",
-                "		burstIntv	=" + F16CManual4ChaffBurstIntv_string + ",",
-                "		salvoQty	=" + F16CManual4ChaffSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CManual4ChaffSalvoIntv_string + ",",
+                "		burstQty 	= " + F16CManual4ChaffBurstQty + ",",
+                "		burstIntv	= " + F16CManual4ChaffBurstIntv + ",",
+                "		salvoQty	= " + F16CManual4ChaffSalvoQty + ",",
+                "		salvoIntv	= " + F16CManual4ChaffSalvoIntv + ",",
                 "	},",
                 "	flare = {",
-                "		burstQty	=" + F16CManual4FlareBurstQty_string + ",",
-                "		burstIntv	=" + F16CManual4FlareBurstIntv_string + ",",
-                "		salvoQty	=" + F16CManual4FlareSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CManual4FlareSalvoIntv_string + ",",
+                "		burstQty	= " + F16CManual4FlareBurstQty + ",",
+                "		burstIntv	= " + F16CManual4FlareBurstIntv + ",",
+                "		salvoQty	= " + F16CManual4FlareSalvoQty + ",",
+                "		salvoIntv	= " + F16CManual4FlareSalvoIntv + ",",
                 "	},",
                 "}",
                 "",
                 "-- MAN 5 - Wall Dispense button, Panic",
                 "programs[ProgramNames.MAN_5] = {",
                 "	chaff = {",
-                "		burstQty 	=" + F16CManual5ChaffBurstQty_string + ",",
-                "		burstIntv	=" + F16CManual5ChaffBurstIntv_string + ",",
-                "		salvoQty	=" + F16CManual5ChaffSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CManual5ChaffSalvoIntv_string + ",",
+                "		burstQty 	= " + F16CManual5ChaffBurstQty + ",",
+                "		burstIntv	= " + F16CManual5ChaffBurstIntv + ",",
+                "		salvoQty	= " + F16CManual5ChaffSalvoQty + ",",
+                "		salvoIntv	= " + F16CManual5ChaffSalvoIntv + ",",
                 "	},",
                 "	flare = {",
-                "		burstQty	=" + F16CManual5FlareBurstQty_string + ",",
-                "		burstIntv	=" + F16CManual5FlareBurstIntv_string + ",",
-                "		salvoQty	=" + F16CManual5FlareSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CManual5FlareSalvoIntv_string + ",",
+                "		burstQty	= " + F16CManual5FlareBurstQty + ",",
+                "		burstIntv	= " + F16CManual5FlareBurstIntv + ",",
+                "		salvoQty	= " + F16CManual5FlareSalvoQty + ",",
+                "		salvoIntv	= " + F16CManual5FlareSalvoIntv + ",",
                 "	},",
                 "}",
                 "",
-                "-- MAN 6 - BYPASS mode",
+                "-- MAN 6 - CMS LEFT",
                 "programs[ProgramNames.MAN_6] = {",
                 "	chaff = {",
-                "		burstQty 	=" + F16CManual6ChaffBurstQty_string + ",",
-                "		burstIntv	=" + F16CManual6ChaffBurstIntv_string + ",",
-                "		salvoQty	=" + F16CManual6ChaffSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CManual6ChaffSalvoIntv_string + ",",
+                "		burstQty 	= " + F16CManual6ChaffBurstQty + ",",
+                "		burstIntv	= " + F16CManual6ChaffBurstIntv + ",",
+                "		salvoQty	= " + F16CManual6ChaffSalvoQty + ",",
+                "		salvoIntv	= " + F16CManual6ChaffSalvoIntv + ",",
                 "	},",
                 "	flare = {",
-                "		burstQty	=" + F16CManual6FlareBurstQty_string + ",",
-                "		burstIntv	=" + F16CManual6FlareBurstIntv_string + ",",
-                "		salvoQty	=" + F16CManual6FlareSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CManual6FlareSalvoIntv_string + ",",
+                "		burstQty	= " + F16CManual6FlareBurstQty + ",",
+                "		burstIntv	= " + F16CManual6FlareBurstIntv + ",",
+                "		salvoQty	= " + F16CManual6FlareSalvoQty + ",",
+                "		salvoIntv	= " + F16CManual6FlareSalvoIntv + ",",
                 "	},",
                 "}",
                 "",
                 "-- Auto presets",
-                "-- Old generation radar SAM",
+                "-- Threat type 1",
                 "programs[ProgramNames.AUTO_1] = {",
                 "	chaff = {",
-                "		burstQty 	=" + F16COldSamChaffBurstQty_string + ",",
-                "		burstIntv	=" + F16COldSamChaffBurstIntv_string + ",",
-                "		salvoQty	=" + F16COldSamChaffSalvoQty_string + ",",
-                "		salvoIntv	=" + F16COldSamChaffSalvoIntv_string + ",",
+                "		burstQty 	= " + F16CAuto1ChaffBurstQty + ",",
+                "		burstIntv	= " + F16CAuto1ChaffBurstIntv + ",",
+                "		salvoQty	= " + F16CAuto1ChaffSalvoQty + ",",
+                "		salvoIntv	= " + F16CAuto1ChaffSalvoIntv + ",",
                 "	},",
                 "	flare = {",
-                "		burstQty	=" + F16COldSamFlareBurstQty_string + ",",
-                "		burstIntv	=" + F16COldSamFlareBurstIntv_string + ",",
-                "		salvoQty	=" + F16COldSamFlareSalvoQty_string + ",",
-                "		salvoIntv	=" + F16COldSamFlareSalvoIntv_string + ",",
+                "		burstQty	= " + F16CAuto1FlareBurstQty + ",",
+                "		burstIntv	= " + F16CAuto1FlareBurstIntv + ",",
+                "		salvoQty	= " + F16CAuto1FlareSalvoQty + ",",
+                "		salvoIntv	= " + F16CAuto1FlareSalvoIntv + ",",
                 "	},",
                 "}",
                 "",
-                "-- Current generation radar SAM",
+                "-- Threat type 2",
                 "programs[ProgramNames.AUTO_2] = {",
                 "	chaff = {",
-                "		burstQty 	=" + F16CCurrentSamChaffBurstQty_string + ",",
-                "		burstIntv	=" + F16CCurrentSamChaffBurstIntv_string + ",",
-                "		salvoQty	=" + F16CCurrentSamChaffSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CCurrentSamChaffSalvoIntv_string + ",",
+                "		burstQty 	= " + F16CAuto2ChaffBurstQty + ",",
+                "		burstIntv	= " + F16CAuto2ChaffBurstIntv + ",",
+                "		salvoQty	= " + F16CAuto2ChaffSalvoQty + ",",
+                "		salvoIntv	= " + F16CAuto2ChaffSalvoIntv + ",",
                 "	},",
                 "	flare = {",
-                "		burstQty	=" + F16CCurrentSamFlareBurstQty_string + ",",
-                "		burstIntv	=" + F16CCurrentSamFlareBurstIntv_string + ",",
-                "		salvoQty	=" + F16CCurrentSamFlareSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CCurrentSamFlareSalvoIntv_string + ",",
+                "		burstQty	= " + F16CAuto2FlareBurstQty + ",",
+                "		burstIntv	= " + F16CAuto2FlareBurstIntv + ",",
+                "		salvoQty	= " + F16CAuto2FlareSalvoQty + ",",
+                "		salvoIntv	= " + F16CAuto2FlareSalvoIntv + ",",
                 "	},",
                 "}",
                 "",
-                "-- IR SAM",
+                "-- Threat type 3",
                 "programs[ProgramNames.AUTO_3] = {",
                 "	chaff = {",
-                "		burstQty 	=" + F16CIrSamChaffBurstQty_string + ",",
-                "		burstIntv	=" + F16CIrSamChaffBurstIntv_string + ",",
-                "		salvoQty	=" + F16CIrSamChaffSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CIrSamChaffSalvoIntv_string + ",",
+                "		burstQty 	= " + F16CAuto3ChaffBurstQty + ",",
+                "		burstIntv	= " + F16CAuto3ChaffBurstIntv + ",",
+                "		salvoQty	= " + F16CAuto3ChaffSalvoQty + ",",
+                "		salvoIntv	= " + F16CAuto3ChaffSalvoIntv + ",",
                 "	},",
                 "	flare = {",
-                "		burstQty	=" + F16CIrSamFlareBurstQty_string + ",",
-                "		burstIntv	=" + F16CIrSamFlareBurstIntv_string + ",",
-                "		salvoQty	=" + F16CIrSamFlareSalvoQty_string + ",",
-                "		salvoIntv	=" + F16CIrSamFlareSalvoIntv_string + ",",
+                "		burstQty	= " + F16CAuto3FlareBurstQty + ",",
+                "		burstIntv	= " + F16CAuto3FlareBurstIntv + ",",
+                "		salvoQty	= " + F16CAuto3FlareSalvoQty + ",",
+                "		salvoIntv	= " + F16CAuto3FlareSalvoIntv + ",",
+                "	},",
+                "}",
+                "",
+                "-- BYPASS",
+                "programs[ProgramNames.BYP] = {",
+                "	chaff = {",
+                "		burstQty 	= " + F16CBypassChaffBurstQty + ",",
+                "		burstIntv	= " + F16CBypassChaffBurstIntv + ",",
+                "		salvoQty	= " + F16CBypassChaffSalvoQty + ",",
+                "		salvoIntv	= " + F16CBypassChaffSalvoIntv + ",",
+                "	},",
+                "	flare = {",
+                "		burstQty	= " + F16CBypassFlareBurstQty + ",",
+                "		burstIntv	= " + F16CBypassFlareBurstIntv + ",",
+                "		salvoQty	= " + F16CBypassFlareSalvoQty + ",",
+                "		salvoIntv	= " + F16CBypassFlareSalvoIntv + ",",
                 "	},",
                 "}",
                 "",
@@ -1771,8 +1774,8 @@ namespace DiCE
                 "			{Failure = AN_ALE_47_FAILURE_CONTAINER, Failure_name = \"AN_ALE_47_FAILURE_CONTAINER\", Failure_editor_name = _(\"AN/ALE-47 container failure\"),  Element = 23, Integrity_Treshold = 0.75, work_time_to_fail_probability = 0.5, work_time_to_fail = 3600*300},",
                 "}",
                 "",
-                "need_to_be_closed = true -- lua_state  will be closed in post_initialize()",
-                "--Exported via DiCE by Bailey " + System.DateTime.Now};
+                "need_to_be_closed = true -- lua_state  will be closed in post_initialize()" };
+                //"--Exported via DiCE by Bailey " + System.DateTime.Now};
 
             System.IO.Directory.CreateDirectory(cmdsLua_F16C_FolderPath);
 
@@ -1791,6 +1794,7 @@ namespace DiCE
                 richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + h.Message);
                 richTextBox_log.ScrollToEnd();
             }
+            
         }
 
 
@@ -2144,8 +2148,8 @@ namespace DiCE
                 "		{Failure = AN_ALE_40V_FAILURE_CONTAINER_RIGHT_WING, Failure_name = \"AN_ALE_40V_FAILURE_CONTAINER_RIGHT_WING\", Failure_editor_name = _(\"AN/ALE-40(V) right wing container failure\"),  Element = 24, Integrity_Treshold = 0.75, work_time_to_fail_probability = 0.5, work_time_to_fail = 3600*300},",
                 "}",
                 "",
-                "need_to_be_closed = true -- lua_state  will be closed in post_initialize()",
-                "--Exported via DiCE by Bailey " + System.DateTime.Now};
+                "need_to_be_closed = true -- lua_state  will be closed in post_initialize()" };
+                //"--Exported via DiCE by Bailey " + System.DateTime.Now};
 
             //if DiCE detects that the A-10C is installed
             if (optionsLuaText.Contains(detection_A10C_DiCE) && optionsLuaText.Contains(detection_A10C_vanilla))
@@ -2295,9 +2299,8 @@ namespace DiCE
                 "EW_FLARES_SINT =" + AV8BFlaresOnlyChaffSalvoInterval_string + ";",
                 "",
                 "need_to_be_closed = true",
-                "",
-
-                "--Exported via DiCE by Bailey " + System.DateTime.Now};
+                "" };
+                //"--Exported via DiCE by Bailey " + System.DateTime.Now};
             System.IO.Directory.CreateDirectory(cmdsLua_AV8B_FolderPath);
 
             try
@@ -2317,7 +2320,7 @@ namespace DiCE
             }
         }
 
-        private void readAndExportM2000CData()//TODO: code this
+        private void readAndExportM2000CData()//TODO: this is the new way of how to get the data from the file
         {
             //
             var optionsLuaText = LsonVars.Parse(File.ReadAllText(userOptionsLua_Full_pathWithExtention));
@@ -2461,8 +2464,8 @@ namespace DiCE
                 "programs[10][\"c_intv\"] = "+ M2000CManual10CycleInterval*100,
                 "programs[10][\"panic\"]  = 0",
                 "",
-                "need_to_be_closed = true",
-                "--Exported via DiCE by Bailey " + System.DateTime.Now};
+                "need_to_be_closed = true" };
+                //"--Exported via DiCE by Bailey " + System.DateTime.Now};
 
 
             //start of default settings for some future purpose. make sure to double check the numbers with a fresh file
@@ -2553,8 +2556,8 @@ namespace DiCE
                 "programs[10][\"c_intv\"] = 0",
                 "programs[10][\"panic\"]  = 0",
                 "",
-                "need_to_be_closed = true",
-                "--Exported via DiCE by Bailey " + System.DateTime.Now};
+                "need_to_be_closed = true" };
+                //"--Exported via DiCE by Bailey " + System.DateTime.Now};
             //end of the default settings
 
             System.IO.Directory.CreateDirectory(cmdsLua_M2000C_FolderPath);
@@ -2576,5 +2579,215 @@ namespace DiCE
             }
         }
 
+        /*
+        private void readAndExportAH64DData()//TODO: do this after the CMS for the module is understood
+        {
+            //
+            var optionsLuaText = LsonVars.Parse(File.ReadAllText(userOptionsLua_Full_pathWithExtention));
+            Double AH64DManual01Chaff = optionsLuaText["options"]["plugins"]["DiCE AH64D"]["AH64DManual01Chaff"].GetDoubleLenient();
+            //continue...
+
+            string[] luaExportString = {
+                "local gettext = require(\"i_18n\")",
+                "_ = gettext.translate",
+                "",
+                "programs = {}",
+                "",
+                "-- User Modifiable program",
+                "programs[1] = {}",
+                "programs[1][\"chaff\"]  = "+ AH64DManual01Chaff,
+                "programs[1][\"flare\"]  = "+ M2000CManual01Flare,
+                "programs[1][\"intv\"]   = "+ M2000CManual01Interval*100,
+                "programs[1][\"cycle\"]  = "+ M2000CManual01Cycle,
+                "programs[1][\"c_intv\"] = "+ M2000CManual01CycleInterval*100,
+                "programs[1][\"panic\"]  = 0",
+                "",
+                "programs[2] = {}",
+                "programs[2][\"chaff\"]  = "+ M2000CManual02Chaff,
+                "programs[2][\"flare\"]  = "+ M2000CManual02Flare,
+                "programs[2][\"intv\"]   = "+ M2000CManual02Interval*100,
+                "programs[2][\"cycle\"]  = "+ M2000CManual02Cycle,
+                "programs[2][\"c_intv\"] = "+ M2000CManual02CycleInterval*100,
+                "programs[2][\"panic\"]  = 0",
+                "",
+                "programs[3] = {}",
+                "programs[3][\"chaff\"]  = "+ M2000CManual03Chaff,
+                "programs[3][\"flare\"]  = "+ M2000CManual03Flare,
+                "programs[3][\"intv\"]   = "+ M2000CManual03Interval*100,
+                "programs[3][\"cycle\"]  = "+ M2000CManual03Cycle,
+                "programs[3][\"c_intv\"] = "+ M2000CManual03CycleInterval*100,
+                "programs[3][\"panic\"]  = 0",
+                "",
+                "programs[4] = {}",
+                "programs[4][\"chaff\"]  = "+ M2000CManual04Chaff,
+                "programs[4][\"flare\"]  = "+ M2000CManual04Flare,
+                "programs[4][\"intv\"]   = "+ M2000CManual04Interval*100,
+                "programs[4][\"cycle\"]  = "+ M2000CManual04Cycle,
+                "programs[4][\"c_intv\"] = "+ M2000CManual04CycleInterval*100,
+                "programs[4][\"panic\"]  = 0",
+                "",
+                "programs[5] = {}",
+                "programs[5][\"chaff\"]  = "+ M2000CManual05Chaff,
+                "programs[5][\"flare\"]  = "+ M2000CManual05Flare,
+                "programs[5][\"intv\"]   = "+ M2000CManual05Interval*100,
+                "programs[5][\"cycle\"]  = "+ M2000CManual05Cycle,
+                "programs[5][\"c_intv\"] = "+ M2000CManual05CycleInterval*100,
+                "programs[5][\"panic\"]  = 0",
+                "",
+                "programs[6] = {}",
+                "programs[6][\"chaff\"]  = "+ M2000CManual06Chaff,
+                "programs[6][\"flare\"]  = "+ M2000CManual06Flare,
+                "programs[6][\"intv\"]   = "+ M2000CManual06Interval*100,
+                "programs[6][\"cycle\"]  = "+ M2000CManual06Cycle,
+                "programs[6][\"c_intv\"] = "+ M2000CManual06CycleInterval*100,
+                "programs[6][\"panic\"]  = 0",
+                "",
+                "programs[7] = {}",
+                "programs[7][\"chaff\"]  = "+ M2000CManual07Chaff,
+                "programs[7][\"flare\"]  = "+ M2000CManual07Flare,
+                "programs[7][\"intv\"]   = "+ M2000CManual07Interval*100,
+                "programs[7][\"cycle\"]  = "+ M2000CManual07Cycle,
+                "programs[7][\"c_intv\"] = "+ M2000CManual07CycleInterval*100,
+                "programs[7][\"panic\"]  = 0",
+                "",
+                "programs[8] = {}",
+                "programs[8][\"chaff\"]  = "+ M2000CManual08Chaff,
+                "programs[8][\"flare\"]  = "+ M2000CManual08Flare,
+                "programs[8][\"intv\"]   = "+ M2000CManual08Interval*100,
+                "programs[8][\"cycle\"]  = "+ M2000CManual08Cycle,
+                "programs[8][\"c_intv\"] = "+ M2000CManual08CycleInterval*100,
+                "programs[8][\"panic\"]  = 0",
+                "",
+                "programs[9] = {}",
+                "programs[9][\"chaff\"]  = "+ M2000CManual09Chaff,
+                "programs[9][\"flare\"]  = "+ M2000CManual09Flare,
+                "programs[9][\"intv\"]   = "+ M2000CManual09Interval*100,
+                "programs[9][\"cycle\"]  = "+ M2000CManual09Cycle,
+                "programs[9][\"c_intv\"] = "+ M2000CManual09CycleInterval*100,
+                "programs[9][\"panic\"]  = 0",
+                "",
+                "programs[10] = {}",
+                "programs[10][\"chaff\"]  = "+ M2000CManual10Chaff,
+                "programs[10][\"flare\"]  = "+ M2000CManual10Flare,
+                "programs[10][\"intv\"]   = "+ M2000CManual10Interval*100,
+                "programs[10][\"cycle\"]  = "+ M2000CManual10Cycle,
+                "programs[10][\"c_intv\"] = "+ M2000CManual10CycleInterval*100,
+                "programs[10][\"panic\"]  = 0",
+                "",
+                "need_to_be_closed = true" };
+            //"--Exported via DiCE by Bailey " + System.DateTime.Now};
+
+
+            //start of default settings for some future purpose. make sure to double check the numbers with a fresh file
+            string[] luaExportStringDefaultSettings = {
+                "local gettext = require(\"i_18n\")",
+                "_ = gettext.translate",
+                "",
+                "programs = {}",
+                "",
+                "-- User Modifiable program",
+                "programs[1] = {}",
+                "programs[1][\"chaff\"]  = 6",
+                "programs[1][\"flare\"]  = 0",
+                "programs[1][\"intv\"]   = 50",
+                "programs[1][\"cycle\"]  = 1",
+                "programs[1][\"c_intv\"] = 0",
+                "programs[1][\"panic\"]  = 0",
+                "",
+                "programs[2] = {}",
+                "programs[2][\"chaff\"]  = 6",
+                "programs[2][\"flare\"]  = 0",
+                "programs[2][\"intv\"]   = 50",
+                "programs[2][\"cycle\"]  = 2",
+                "programs[2][\"c_intv\"] = 200",
+                "programs[2][\"panic\"]  = 0",
+                "",
+                "programs[3] = {}",
+                "programs[3][\"chaff\"]  = 6",
+                "programs[3][\"flare\"]  = 0",
+                "programs[3][\"intv\"]   = 50",
+                "programs[3][\"cycle\"]  = 3",
+                "programs[3][\"c_intv\"] = 200",
+                "programs[3][\"panic\"]  = 0",
+                "",
+                "programs[4] = {}",
+                "programs[4][\"chaff\"]  = 0",
+                "programs[4][\"flare\"]  = 2",
+                "programs[4][\"intv\"]   = 0",
+                "programs[4][\"cycle\"]  = 1",
+                "programs[4][\"c_intv\"] = 0",
+                "programs[4][\"panic\"]  = 0",
+                "",
+                "programs[5] = {}",
+                "programs[5][\"chaff\"]  = 1",
+                "programs[5][\"flare\"]  = 1",
+                "programs[5][\"intv\"]   = 0",
+                "programs[5][\"cycle\"]  = 1",
+                "programs[5][\"c_intv\"] = 0",
+                "programs[5][\"panic\"]  = 0",
+                "",
+                "programs[6] = {}",
+                "programs[6][\"chaff\"]  = 12",
+                "programs[6][\"flare\"]  = 0",
+                "programs[6][\"intv\"]   = 75",
+                "programs[6][\"cycle\"]  = 1",
+                "programs[6][\"c_intv\"] = 0",
+                "programs[6][\"panic\"]  = 0",
+                "",
+                "programs[7] = {}",
+                "programs[7][\"chaff\"]  = 20",
+                "programs[7][\"flare\"]  = 0",
+                "programs[7][\"intv\"]   = 25",
+                "programs[7][\"cycle\"]  = 1",
+                "programs[7][\"c_intv\"] = 0",
+                "programs[7][\"panic\"]  = 0",
+                "",
+                "programs[8] = {}",
+                "programs[8][\"chaff\"]  = 0",
+                "programs[8][\"flare\"]  = 6",
+                "programs[8][\"intv\"]   = 25",
+                "programs[8][\"cycle\"]  = 1",
+                "programs[8][\"c_intv\"] = 0",
+                "programs[8][\"panic\"]  = 0",
+                "",
+                "programs[9] = {}",
+                "programs[9][\"chaff\"]  = 20",
+                "programs[9][\"flare\"]  = 6",
+                "programs[9][\"intv\"]   = 25",
+                "programs[9][\"cycle\"]  = 1",
+                "programs[9][\"c_intv\"] = 0",
+                "programs[9][\"panic\"]  = 0",
+                "",
+                "programs[10] = {}",
+                "programs[10][\"chaff\"]  = 0",
+                "programs[10][\"flare\"]  = 32",
+                "programs[10][\"intv\"]   = 25",
+                "programs[10][\"cycle\"]  = 1",
+                "programs[10][\"c_intv\"] = 0",
+                "programs[10][\"panic\"]  = 0",
+                "",
+                "need_to_be_closed = true" };
+            //"--Exported via DiCE by Bailey " + System.DateTime.Now};
+            //end of the default settings
+
+            System.IO.Directory.CreateDirectory(cmdsLua_AH64D_FolderPath);
+
+            try
+            {
+                System.IO.File.WriteAllLines(cmdsLua_AH64D_fullPath, luaExportString);
+                //https://stackoverflow.com/questions/5920882/file-move-does-not-work-file-already-exists
+                //playCompleteSound();
+
+                richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "AH64D CMS file exported.");
+                richTextBox_log.ScrollToEnd();
+            }
+            catch (IOException h)
+            {
+                richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + "DiCE could not write the AH64D CMS lua.");
+                richTextBox_log.AppendText(Environment.NewLine + DateTime.Now + ": " + h.Message);
+                richTextBox_log.ScrollToEnd();
+            }
+        }
+        */
     }
 }
